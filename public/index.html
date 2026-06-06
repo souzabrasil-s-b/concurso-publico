@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0A2540">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SEDUC 2026">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="/favicon.png">
+<title>Simulação de Inscrição – Concurso SEDUC-AM 2026</title>
+<!-- iOS/Apple System Font — no import needed -->
+<style>
+  /* ══════════════════════════════════════════
+     FONTE: SF Pro / Apple System Font Stack
+     ══════════════════════════════════════════ */
+  :root {
+    --sf: -apple-system, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    --sf-mono: "SF Mono", "Menlo", "Monaco", monospace;
+
+    /* Paleta */
+    --verde:        #34C759;   /* iOS green */
+    --verde-esc:    #248A3D;
+    --verde-claro:  #E9F9EE;
+    --azul:         #0A2540;
+    --azul-med:     #1C3F6E;
+    --azul-vivo:    #007AFF;   /* iOS blue */
+    --amarelo:      #FF9F0A;   /* iOS orange/yellow */
+    --vermelho:     #FF3B30;   /* iOS red */
+    --cinza-bg:     #F2F2F7;   /* iOS grouped bg */
+    --cinza-card:   #FFFFFF;
+    --cinza-2:      #E5E5EA;
+    --cinza-3:      #C7C7CC;
+    --texto:        #1C1C1E;   /* iOS label */
+    --texto-2:      #3A3A3C;
+    --texto-3:      #6B6B70;   /* iOS secondary */
+    --borda:        rgba(60,60,67,0.12);
+    --sombra-card:  0 2px 20px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.04);
+    --sombra-elev:  0 8px 40px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06);
+    --radius:       16px;
+    --radius-sm:    10px;
+    --radius-xs:    8px;
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    font-family: var(--sf);
+    font-feature-settings: "kern" 1, "liga" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: #0A1628;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 20% 0%, rgba(0,122,255,0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 100%, rgba(52,199,89,0.12) 0%, transparent 55%);
+    min-height: 100vh;
+    color: var(--texto);
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,22,40,0.82);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 0.5px solid rgba(255,255,255,0.1);
+    padding: 14px 24px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .header-logo {
+    width: 44px; height: 44px; flex-shrink: 0;
+    background: linear-gradient(135deg, #34C759, #30B953);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 2px 12px rgba(52,199,89,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+  .header-text h1 {
+    font-size: 15px; font-weight: 600; letter-spacing: -0.3px;
+    color: #fff;
+  }
+  .header-text p { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 1px; }
+  .header-badge {
+    margin-left: auto; flex-shrink: 0;
+    background: rgba(255,159,10,0.18); border: 1px solid rgba(255,159,10,0.35);
+    color: #FF9F0A; border-radius: 20px; padding: 4px 10px;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase;
+  }
+  .admin-trigger {
+    width: 28px; height: 28px; border-radius: 50%;
+    cursor: default; opacity: 0; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    user-select: none;
+  }
+
+  /* ── MODAL OVERLAY ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    z-index: 1000; align-items: flex-end; justify-content: center;
+  }
+  @media (min-width: 480px) { .modal-overlay { align-items: center; } }
+  .modal-overlay.open { display: flex; }
+
+  .modal-box {
+    background: #1C1C1E;
+    border-radius: 20px 20px 0 0;
+    padding: 8px 0 32px;
+    width: 100%; max-width: 420px;
+    box-shadow: 0 -4px 40px rgba(0,0,0,0.5);
+    animation: slideUp 0.35s cubic-bezier(.32,1,.23,1);
+    overflow: hidden;
+  }
+  @media (min-width: 480px) {
+    .modal-box { border-radius: 20px; padding: 32px 28px; animation: popIn 0.3s cubic-bezier(.34,1.56,.64,1); }
+  }
+  .modal-handle {
+    width: 36px; height: 4px; background: rgba(255,255,255,0.2);
+    border-radius: 2px; margin: 0 auto 24px;
+  }
+  @media (min-width: 480px) { .modal-handle { display: none; } }
+  .modal-inner { padding: 0 24px; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes popIn   { from { transform: scale(0.88) translateY(12px); opacity:0; } to { transform: scale(1) translateY(0); opacity:1; } }
+
+  .modal-icon { font-size: 32px; margin-bottom: 10px; text-align: center; }
+  .modal-title { font-size: 18px; font-weight: 700; letter-spacing: -0.4px; color: #fff; margin-bottom: 5px; text-align: center; }
+  .modal-sub { font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 22px; text-align: center; }
+  .modal-input {
+    width: 100%; padding: 14px 16px;
+    background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.12);
+    border-radius: var(--radius-sm); color: #fff;
+    font-size: 16px; text-align: center; letter-spacing: 4px;
+    font-family: var(--sf); margin-bottom: 12px;
+  }
+  .modal-input::placeholder { color: rgba(255,255,255,0.25); letter-spacing: 1px; }
+  .modal-input:focus { outline: none; border-color: var(--azul-vivo); background: rgba(0,122,255,0.08); }
+  .modal-btn {
+    width: 100%; padding: 14px;
+    background: var(--azul-vivo); color: #fff; border: none;
+    border-radius: var(--radius-sm); font-family: var(--sf);
+    font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+  }
+  .modal-btn:hover { background: #0066DD; }
+  .modal-btn:active { transform: scale(0.98); }
+  .modal-erro { font-size: 12px; color: var(--vermelho); margin-top: 10px; min-height: 18px; text-align: center; }
+  .modal-cancel { font-size: 14px; color: var(--azul-vivo); margin-top: 14px; cursor: pointer; text-align: center; }
+
+  /* ── MODAL EDIÇÃO ADMIN ── */
+  .modal-edit-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+    z-index: 1100; align-items: flex-end; justify-content: center;
+  }
+  @media (min-width: 480px) { .modal-edit-overlay { align-items: center; } }
+  .modal-edit-overlay.open { display: flex; }
+  .modal-edit-box {
+    background: #1C1C1E; border-radius: 20px 20px 0 0;
+    padding: 8px 0 32px; width: 100%; max-width: 420px;
+    box-shadow: 0 -4px 40px rgba(0,0,0,0.5);
+    animation: slideUp 0.35s cubic-bezier(.32,1,.23,1);
+  }
+  @media (min-width: 480px) {
+    .modal-edit-box { border-radius: 20px; padding: 28px 24px; animation: popIn 0.3s cubic-bezier(.34,1.56,.64,1); }
+  }
+  .modal-edit-inner { padding: 0 24px; }
+  .modal-edit-title { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; color: #fff; margin-bottom: 18px; }
+  .modal-edit-box label {
+    font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.45);
+    text-transform: uppercase; letter-spacing: 0.6px;
+    display: block; margin-bottom: 6px; margin-top: 14px;
+  }
+  .modal-edit-box input, .modal-edit-box select {
+    width: 100%; padding: 12px 14px;
+    background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm); color: #fff;
+    font-size: 14px; font-family: var(--sf); appearance: none;
+  }
+  .modal-edit-box input::placeholder { color: rgba(255,255,255,0.25); }
+  .modal-edit-box select option { background: #2C2C2E; color: #fff; }
+  .modal-edit-box select optgroup { background: #2C2C2E; color: rgba(255,255,255,0.5); }
+  .modal-edit-box input:focus, .modal-edit-box select:focus { outline: none; border-color: var(--azul-vivo); }
+  .modal-edit-btns { display: flex; gap: 10px; margin-top: 20px; }
+  .modal-edit-btns button {
+    flex: 1; padding: 13px; border: none; border-radius: var(--radius-sm);
+    font-family: var(--sf); font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .btn-save { background: var(--azul-vivo); color: #fff; }
+  .btn-save:hover { background: #0066DD; }
+  .btn-cancel-edit { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
+
+  /* ── PAINEL ADMIN ── */
+  .admin-panel {
+    display: none;
+    background: linear-gradient(160deg, #0D1F35 0%, #0A1628 100%);
+    border-bottom: 0.5px solid rgba(255,255,255,0.08);
+    padding: 20px 24px;
+    color: #fff;
+  }
+  .admin-panel.open { display: block; }
+  .admin-panel-title {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.6px;
+    text-transform: uppercase; color: rgba(255,255,255,0.4);
+    margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+  }
+  .admin-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .admin-table th {
+    text-align: left; padding: 8px 10px;
+    color: rgba(255,255,255,0.35); font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.7px;
+    border-bottom: 0.5px solid rgba(255,255,255,0.08);
+  }
+  .admin-table td {
+    padding: 9px 10px; border-bottom: 0.5px solid rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.8); vertical-align: middle;
+  }
+  .admin-table tr:last-child td { border-bottom: none; }
+  .admin-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .admin-close-btn {
+    background: rgba(255,255,255,0.08); border: none; color: rgba(255,255,255,0.7);
+    border-radius: var(--radius-xs); padding: 8px 16px; font-size: 13px;
+    font-family: var(--sf); cursor: pointer; transition: background 0.15s;
+  }
+  .admin-close-btn:hover { background: rgba(255,255,255,0.14); }
+  .admin-action-btn {
+    border: none; border-radius: 6px; padding: 5px 9px; font-size: 11px;
+    font-weight: 600; cursor: pointer; margin-right: 3px; font-family: var(--sf);
+    transition: all 0.15s;
+  }
+  .btn-edit { background: rgba(255,159,10,0.15); color: #FF9F0A; }
+  .btn-edit:hover { background: rgba(255,159,10,0.3); }
+  .btn-del { background: rgba(255,59,48,0.15); color: #FF3B30; }
+  .btn-del:hover { background: rgba(255,59,48,0.3); }
+  .admin-add-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(52,199,89,0.12); border: 1px solid rgba(52,199,89,0.2);
+    color: #34C759; border-radius: var(--radius-xs); padding: 8px 14px;
+    font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--sf);
+    margin-bottom: 14px; transition: all 0.15s;
+  }
+  .admin-add-btn:hover { background: rgba(52,199,89,0.22); }
+  .admin-toggle-nota {
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.08);
+    border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 16px; gap: 12px;
+  }
+  .toggle-btn {
+    border: none; border-radius: 20px; padding: 7px 16px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    font-family: var(--sf); transition: all 0.2s; white-space: nowrap;
+    letter-spacing: -0.1px;
+  }
+  .toggle-btn.locked  { background: rgba(255,59,48,0.15); color: #FF3B30; border: 1px solid rgba(255,59,48,0.25); }
+  .toggle-btn.unlocked{ background: rgba(52,199,89,0.15); color: #34C759; border: 1px solid rgba(52,199,89,0.25); }
+
+  /* ── ABAS ADMIN ── */
+  .admin-tabs {
+    display: flex; gap: 6px; margin-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding-bottom: 10px;
+  }
+  .admin-tab {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5); border-radius: var(--radius-xs);
+    padding: 7px 14px; font-size: 12px; font-weight: 600;
+    cursor: pointer; font-family: var(--sf); transition: all 0.15s;
+  }
+  .admin-tab:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
+  .admin-tab-ativo {
+    background: rgba(0,122,255,0.2); border-color: rgba(0,122,255,0.4);
+    color: var(--azul-vivo);
+  }
+  /* Tabela de cargos admin */
+  .cargo-row-admin {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 10px; border-bottom: 0.5px solid rgba(255,255,255,0.06);
+    font-size: 12px; color: rgba(255,255,255,0.8);
+  }
+  .cargo-row-admin:last-child { border-bottom: none; }
+  .cargo-row-admin:hover { background: rgba(255,255,255,0.03); border-radius: 6px; }
+  .cargo-row-nome { flex: 1; font-weight: 500; }
+  .cargo-row-grupo { font-size: 10px; color: rgba(255,255,255,0.35); white-space: nowrap; }
+  .cargo-row-nivel { font-size: 10px; font-weight: 600; border-radius: 10px; padding: 2px 7px; white-space: nowrap; }
+  .cargo-add-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(52,199,89,0.12); border: 1px solid rgba(52,199,89,0.2);
+    color: #34C759; border-radius: var(--radius-xs); padding: 8px 14px;
+    font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--sf);
+    margin-bottom: 12px; transition: all 0.15s;
+  }
+  .cargo-add-btn:hover { background: rgba(52,199,89,0.22); }
+  .cargo-search {
+    width: 100%; padding: 9px 12px; margin-bottom: 10px;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-xs); color: #fff; font-size: 13px;
+    font-family: var(--sf);
+  }
+  .cargo-search::placeholder { color: rgba(255,255,255,0.25); }
+  .cargo-search:focus { outline: none; border-color: var(--azul-vivo); }
+  .cargo-list-wrap { max-height: 340px; overflow-y: auto; border-radius: var(--radius-xs); border: 0.5px solid rgba(255,255,255,0.08); }
+
+  /* ── BANNER NOTA ── */
+  .nota-banner {
+    display: flex; align-items: flex-start; gap: 10px;
+    border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 16px;
+    transition: all 0.3s ease;
+  }
+  .nota-banner.bloqueada {
+    background: rgba(255,159,10,0.08);
+    border: 1px solid rgba(255,159,10,0.25);
+  }
+  .nota-banner.liberada {
+    background: rgba(52,199,89,0.08);
+    border: 1px solid rgba(52,199,89,0.25);
+    animation: pulseBanner 0.4s ease;
+  }
+  @keyframes pulseBanner { 0%,100%{opacity:1} 50%{opacity:0.75} }
+  .nota-banner-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .nota-banner-text strong { display: block; font-size: 13px; font-weight: 600; color: var(--texto); }
+  .nota-banner-text small { font-size: 11px; color: var(--texto-3); font-weight: 400; }
+
+  /* ── CAMPO NOTA ── */
+  .nota-wrap { display: flex; align-items: center; gap: 7px; margin-top: 8px; flex-wrap: wrap; }
+  .nota-input {
+    width: 80px; padding: 6px 10px; border-radius: var(--radius-xs);
+    text-align: center; font-size: 15px; font-weight: 600;
+    font-family: var(--sf);
+    border: 1.5px solid var(--cinza-2); background: var(--cinza-bg); color: var(--texto);
+    transition: all 0.15s;
+  }
+  .nota-input:disabled {
+    background: repeating-linear-gradient(45deg,#F2F2F7,#F2F2F7 5px,#EBEBF0 5px,#EBEBF0 10px);
+    color: var(--cinza-3); cursor: not-allowed; border-color: var(--cinza-2); opacity: 0.7;
+  }
+  .nota-input:focus { outline: none; border-color: var(--azul-vivo); background: #fff; box-shadow: 0 0 0 3px rgba(0,122,255,0.1); }
+  .nota-salvar-btn {
+    border: none; border-radius: var(--radius-xs); padding: 7px 12px;
+    font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--sf);
+    background: var(--azul-vivo); color: #fff; transition: all 0.15s; white-space: nowrap;
+  }
+  .nota-salvar-btn:disabled { background: var(--cinza-2); color: var(--cinza-3); cursor: not-allowed; }
+  .nota-salvar-btn:not(:disabled):hover { background: #0066DD; }
+  .nota-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 15px; font-weight: 700; font-family: var(--sf);
+    background: rgba(52,199,89,0.1); color: var(--verde-esc);
+    border-radius: var(--radius-xs); padding: 4px 10px;
+    border: 1px solid rgba(52,199,89,0.25);
+  }
+  .nota-bloqueada-msg {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 500; color: var(--texto-3);
+    background: var(--cinza-bg); border: 1px solid var(--cinza-2);
+    border-radius: var(--radius-xs); padding: 4px 9px;
+  }
+
+  /* ── CONTADOR EDIÇÕES ── */
+  .edicoes-counter {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10px; font-weight: 600; border-radius: 20px;
+    padding: 3px 8px; white-space: nowrap; letter-spacing: 0.1px;
+    font-family: var(--sf);
+  }
+  .edicoes-ok       { background: rgba(0,122,255,0.08); color: var(--azul-vivo); border: 1px solid rgba(0,122,255,0.18); }
+  .edicoes-alerta   { background: rgba(255,159,10,0.1); color: #CC7700; border: 1px solid rgba(255,159,10,0.25); }
+  .edicoes-esgotadas{ background: rgba(255,59,48,0.08); color: var(--vermelho); border: 1px solid rgba(255,59,48,0.2); font-weight: 700; }
+
+  /* ── CONTAINER ── */
+  .container {
+    max-width: 1080px; margin: 0 auto;
+    padding: 20px 16px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  }
+  @media (max-width: 760px) {
+    .container { grid-template-columns: 1fr; padding: 14px 12px; gap: 12px; }
+    header { padding: 12px 16px; }
+    .header-logo { width: 38px; height: 38px; font-size: 17px; }
+    .header-text h1 { font-size: 13px; }
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--cinza-card);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--sombra-card);
+    border: 0.5px solid rgba(0,0,0,0.04);
+  }
+  .card-title {
+    font-size: 17px; font-weight: 700; letter-spacing: -0.4px;
+    color: var(--texto); margin-bottom: 3px;
+  }
+  .card-subtitle { font-size: 13px; color: var(--texto-3); margin-bottom: 20px; }
+
+  /* ── FORM ── */
+  .form-group { margin-bottom: 16px; }
+  label {
+    display: block; font-size: 11px; font-weight: 600;
+    color: var(--texto-3); letter-spacing: 0.5px;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  input[type="text"], select {
+    width: 100%; padding: 13px 15px;
+    border: 1.5px solid var(--cinza-2); border-radius: var(--radius-sm);
+    font-family: var(--sf); font-size: 15px; color: var(--texto);
+    background: var(--cinza-bg); transition: all 0.15s; appearance: none;
+  }
+  input[type="text"]:focus, select:focus {
+    outline: none; border-color: var(--azul-vivo); background: #fff;
+    box-shadow: 0 0 0 4px rgba(0,122,255,0.1);
+  }
+  input[type="text"]::placeholder { color: var(--cinza-3); }
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: ''; position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    width: 0; height: 0;
+    border-left: 4px solid transparent; border-right: 4px solid transparent;
+    border-top: 5px solid var(--texto-3); pointer-events: none;
+  }
+  .select-wrap select { padding-right: 38px; cursor: pointer; }
+  optgroup { font-weight: 700; color: var(--azul); }
+  option { color: var(--texto); font-weight: 400; }
+
+  /* ── CARGO INFO BOX ── */
+  #cargo-info {
+    background: rgba(52,199,89,0.06); border: 1px solid rgba(52,199,89,0.2);
+    border-radius: var(--radius-sm); padding: 12px 14px; margin-top: 8px;
+    display: none; font-size: 13px;
+  }
+  #cargo-info .ci-label { font-weight: 600; color: var(--verde-esc); font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; }
+  #cargo-info .ci-vagas { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; color: var(--verde-esc); }
+  #cargo-info .ci-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  #cargo-info .ci-jornada { background: #fff; border-radius: var(--radius-xs); padding: 4px 10px; font-size: 12px; font-weight: 600; color: var(--azul); border: 1px solid var(--cinza-2); }
+
+  /* ── BTN INSCREVER ── */
+  .btn-inscrever {
+    width: 100%;
+    background: var(--azul-vivo);
+    color: #fff; border: none; border-radius: var(--radius-sm);
+    padding: 15px; font-family: var(--sf); font-size: 16px; font-weight: 600;
+    cursor: pointer; letter-spacing: -0.2px;
+    transition: all 0.15s; margin-top: 4px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 16px rgba(0,122,255,0.3);
+  }
+  .btn-inscrever:hover { background: #0066DD; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,122,255,0.4); }
+  .btn-inscrever:active { transform: translateY(0) scale(0.99); }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: rgba(28,28,30,0.92); backdrop-filter: blur(16px);
+    color: #fff; font-size: 14px; font-weight: 500; font-family: var(--sf);
+    padding: 12px 20px; border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 0.5px 0 rgba(255,255,255,0.08);
+    z-index: 9999; transition: transform 0.35s cubic-bezier(.32,1,.23,1), opacity 0.35s;
+    white-space: nowrap; border: 0.5px solid rgba(255,255,255,0.08);
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── DASHBOARD ── */
+  .dash-card { grid-column: 1 / -1; }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 10px; margin-bottom: 20px;
+  }
+  @media (max-width: 600px) {
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .stat-box-top3 { grid-column: 1 / -1; }
+  }
+  .stat-box {
+    background: var(--cinza-bg); border-radius: var(--radius-sm);
+    padding: 14px 12px; text-align: center;
+    border: 0.5px solid rgba(0,0,0,0.04);
+  }
+  .stat-box .sn {
+    font-size: 30px; font-weight: 700; letter-spacing: -1px;
+    color: var(--texto); line-height: 1;
+  }
+  .stat-box .sn.sn-text { font-size: 12px; font-weight: 600; line-height: 1.3; letter-spacing: -0.1px; word-break: break-word; }
+  .stat-box .sl { font-size: 10px; color: var(--texto-3); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; font-weight: 500; }
+  .stat-box-top3 { text-align: left; }
+  .top3-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 0.5px solid var(--cinza-2); }
+  .top3-item:last-child { border-bottom: none; }
+  .top3-pos { font-size: 13px; font-weight: 700; color: var(--texto-3); min-width: 20px; }
+  .top3-pos.gold   { color: #FF9F0A; }
+  .top3-pos.silver { color: #8E8E93; }
+  .top3-pos.bronze { color: #C57A3A; }
+  .top3-nome { font-size: 11px; font-weight: 500; color: var(--texto-2); flex: 1; line-height: 1.3; word-break: break-word; }
+  .top3-count {
+    font-size: 12px; font-weight: 700; color: var(--verde-esc);
+    background: rgba(52,199,89,0.1); border-radius: 6px; padding: 2px 7px;
+    border: 1px solid rgba(52,199,89,0.2); white-space: nowrap;
+  }
+  .top3-empty { font-size: 22px; color: var(--cinza-3); text-align: center; padding: 6px 0; }
+
+  /* ── TABELA ── */
+  .table-wrap { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--cinza-2); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    background: var(--cinza-bg); color: var(--texto-3);
+    padding: 10px 14px; text-align: left;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.6px;
+    text-transform: uppercase; border-bottom: 1px solid var(--cinza-2);
+  }
+  thead th:first-child { border-radius: var(--radius-sm) 0 0 0; }
+  thead th:last-child  { border-radius: 0 var(--radius-sm) 0 0; text-align: center; }
+  tbody tr { border-bottom: 0.5px solid var(--cinza-2); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--cinza-bg); }
+  tbody td { padding: 12px 14px; color: var(--texto-2); font-size: 13px; }
+  tbody td:last-child { text-align: center; }
+
+  .nivel-badge {
+    display: inline-block; font-size: 10px; font-weight: 600;
+    padding: 3px 8px; border-radius: 20px; letter-spacing: 0.3px; text-transform: uppercase;
+  }
+  .nivel-superior    { background: rgba(0,122,255,0.08); color: #0066CC; border: 1px solid rgba(0,122,255,0.15); }
+  .nivel-medio       { background: rgba(255,159,10,0.08); color: #B36200; border: 1px solid rgba(255,159,10,0.2); }
+  .nivel-fundamental { background: rgba(255,59,48,0.07); color: #CC2E25; border: 1px solid rgba(255,59,48,0.15); }
+
+  .bar-cell { min-width: 130px; }
+  .bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .bar-bg   { flex: 1; height: 6px; background: var(--cinza-2); border-radius: 20px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 20px; background: var(--verde); transition: width 0.5s ease; min-width: 2px; }
+  .bar-count { font-size: 13px; font-weight: 700; color: var(--verde-esc); min-width: 22px; text-align: right; }
+
+  /* ── FILTRO ── */
+  .filtro-wrap {
+    margin-bottom: 14px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .filtro-search-wrap {
+    position: relative; display: flex; align-items: center;
+  }
+  .filtro-icon {
+    position: absolute; left: 12px; font-size: 14px;
+    pointer-events: none; opacity: 0.4;
+  }
+  .filtro-input {
+    width: 100%; padding: 10px 36px 10px 36px;
+    border: 1.5px solid var(--cinza-2); border-radius: var(--radius-sm);
+    font-family: var(--sf); font-size: 14px; color: var(--texto);
+    background: var(--cinza-bg); transition: all 0.15s;
+    -webkit-appearance: none;
+  }
+  .filtro-input::placeholder { color: var(--cinza-3); }
+  .filtro-input:focus {
+    outline: none; border-color: var(--azul-vivo); background: #fff;
+    box-shadow: 0 0 0 3px rgba(0,122,255,0.1);
+  }
+  .filtro-clear {
+    position: absolute; right: 10px;
+    width: 20px; height: 20px; border-radius: 50%;
+    border: none; background: var(--cinza-3); color: #fff;
+    font-size: 10px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s; flex-shrink: 0;
+  }
+  .filtro-clear:hover { background: var(--vermelho); }
+
+  .filtro-chips {
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+  .chip {
+    border: 1.5px solid var(--cinza-2); border-radius: 20px;
+    padding: 5px 14px; font-size: 12px; font-weight: 500;
+    font-family: var(--sf); color: var(--texto-3);
+    background: var(--cinza-bg); cursor: pointer;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .chip:hover { border-color: var(--azul-vivo); color: var(--azul-vivo); }
+  .chip-ativo {
+    background: var(--azul-vivo); border-color: var(--azul-vivo);
+    color: #fff !important; font-weight: 600;
+  }
+  .chip-ativo:hover { background: #0066DD; border-color: #0066DD; }
+
+  /* ── LISTA INSCRITOS ── */
+  .inscritos-card { grid-column: 1 / -1; }
+  .inscritos-list { overflow-y: auto; }
+  .inscritos-list::-webkit-scrollbar { width: 4px; }
+  .inscritos-list::-webkit-scrollbar-track { background: transparent; }
+  .inscritos-list::-webkit-scrollbar-thumb { background: var(--cinza-2); border-radius: 2px; }
+
+  .inscrito-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 0; border-bottom: 0.5px solid var(--cinza-2);
+    animation: fadeIn 0.25s ease;
+  }
+  .inscrito-item:last-child { border-bottom: none; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: none; } }
+  .inscrito-avatar {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--verde), var(--azul-vivo));
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 13px; letter-spacing: -0.3px;
+  }
+  .inscrito-nome  { font-size: 14px; font-weight: 600; color: var(--texto); letter-spacing: -0.2px; }
+  .inscrito-cargo { font-size: 12px; color: var(--texto-3); margin-top: 1px; }
+  .inscrito-hora  { margin-left: auto; font-size: 11px; color: var(--cinza-3); flex-shrink: 0; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--texto-3); font-size: 14px; }
+  .empty-state .es-icon { font-size: 34px; margin-bottom: 8px; }
+
+  .btn-limpar {
+    background: none; border: 1px solid var(--cinza-2);
+    border-radius: var(--radius-xs); padding: 7px 14px;
+    font-size: 12px; font-weight: 500; color: var(--texto-3);
+    cursor: pointer; font-family: var(--sf); transition: all 0.15s;
+  }
+  .btn-limpar:hover { border-color: var(--vermelho); color: var(--vermelho); }
+
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-text">
+    <h1 id="headerTitulo">SEDUC-AM — Concurso Público 2026</h1>
+    <p id="headerSubtitulo">Simulação de inscrição de candidatos por cargo</p>
+  </div>
+  <span class="header-badge" id="headerBadge">2026</span>
+  <span class="admin-trigger" id="adminTrigger" title="">⚙️</span>
+</header>
+
+<!-- MODAL EDITAR / ADICIONAR CANDIDATO -->
+<div class="modal-edit-overlay" id="modalEdit">
+  <div class="modal-edit-box">
+    <div class="modal-handle"></div>
+    <div class="modal-edit-inner">
+    <div class="modal-edit-title" id="editTitle">✏️ Editar Candidato</div>
+    <label>Nome completo</label>
+    <input type="text" id="editNome" maxlength="80" placeholder="Nome do candidato">
+    <label>Cargo pretendido</label>
+    <div class="select-wrap">
+      <select id="editCargo"></select>
+    </div>
+    <div class="modal-edit-btns">
+      <button class="btn-cancel-edit" onclick="fecharModalEdit()">Cancelar</button>
+      <button class="btn-save" onclick="salvarEdicao()">Salvar</button>
+    </div>
+    </div><!-- /.modal-edit-inner -->
+  </div>
+</div>
+<div class="modal-overlay" id="modalAdmin">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-inner">
+      <div class="modal-icon">🔐</div>
+      <div class="modal-title">Acesso Restrito</div>
+      <div class="modal-sub">Digite a palavra-chave para continuar</div>
+      <input class="modal-input" type="password" id="senhaAdmin" placeholder="••••••••" maxlength="20" onkeydown="if(event.key==='Enter') verificarSenha()">
+      <button class="modal-btn" onclick="verificarSenha()">Entrar</button>
+      <div class="modal-erro" id="modalErro"></div>
+      <div class="modal-cancel" onclick="fecharModal()">Cancelar</div>
+    </div>
+  </div>
+</div>
+
+<!-- PAINEL ADMIN -->
+<div class="admin-panel" id="adminPanel">
+  <div class="admin-panel-title">🛡️ Painel do Administrador</div>
+
+  <!-- ABAS -->
+  <div class="admin-tabs">
+    <button class="admin-tab admin-tab-ativo" id="tabCandidatos" onclick="mudarAbaAdmin('candidatos')">👥 Candidatos</button>
+    <button class="admin-tab" id="tabCargos" onclick="mudarAbaAdmin('cargos')">📋 Gerenciar Cargos</button>
+    <button class="admin-tab" id="tabTema" onclick="mudarAbaAdmin('tema')">🎨 Tema</button>
+  </div>
+
+  <!-- ABA CANDIDATOS -->
+  <div id="abaAdminCandidatos">
+    <div class="admin-toggle-nota">
+      <div>
+        <span style="display:block;font-size:13px;font-weight:700;color:#fff;">📝 Lançamento de notas pelos candidatos</span>
+        <span style="display:block;font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px;" id="toggleNotaDesc">Notas bloqueadas — candidatos não podem inserir.</span>
+      </div>
+      <button class="toggle-btn locked" id="toggleNotaBtn" onclick="toggleNotas()">🔒 Bloqueado</button>
+    </div>
+    <div id="adminConteudo"></div>
+    <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+      <button class="admin-close-btn" onclick="fecharAdmin()">✕ Fechar painel</button>
+      <button class="admin-close-btn" style="background:rgba(224,82,82,0.25);color:#ffaaaa;" onclick="adminLimparTudo()">🗑️ Limpar todas as inscrições</button>
+    </div>
+  </div>
+
+  <!-- ABA CARGOS -->
+  <div id="abaAdminCargos" style="display:none;">
+    <div id="adminCargosConteudo"></div>
+    <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+      <button class="admin-close-btn" onclick="fecharAdmin()">✕ Fechar painel</button>
+    </div>
+  </div>
+
+  <!-- ABA TEMA -->
+  <div id="abaAdminTema" style="display:none;">
+    <div id="adminTemaConteudo"></div>
+    <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+      <button class="admin-close-btn" onclick="fecharAdmin()">✕ Fechar painel</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ADICIONAR/EDITAR CARGO -->
+<div class="modal-edit-overlay" id="modalCargo">
+  <div class="modal-edit-box">
+    <div class="modal-handle"></div>
+    <div class="modal-edit-inner">
+      <div class="modal-edit-title" id="cargoModalTitle">➕ Adicionar Cargo</div>
+      <label>Nome do cargo</label>
+      <input type="text" id="cargoNome" maxlength="80" placeholder="Ex.: Professor de Ciclo – 20h">
+      <label>Emoji (opcional)</label>
+      <input type="text" id="cargoEmoji" maxlength="4" placeholder="Ex.: 🏫">
+      <label>Jornada semanal</label>
+      <input type="text" id="cargoJornada" maxlength="6" placeholder="Ex.: 20h">
+      <label>Vagas</label>
+      <input type="text" id="cargoVagas" maxlength="10" placeholder="Ex.: 200 ou —">
+      <label>Grupo / Categoria</label>
+      <input type="text" id="cargoGrupo" maxlength="60" placeholder="Ex.: Magistério e Pedagogia">
+      <label>Nível</label>
+      <div class="select-wrap" style="margin-top:0;">
+        <select id="cargoNivel">
+          <option value="superior">Superior</option>
+          <option value="medio">Médio/Técnico</option>
+          <option value="fundamental">Fundamental</option>
+        </select>
+      </div>
+      <div class="modal-edit-btns">
+        <button class="btn-cancel-edit" onclick="fecharModalCargo()">Cancelar</button>
+        <button class="btn-save" onclick="salvarCargo()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- FORMULÁRIO -->
+  <div class="card">
+    <div class="card-title">📋 Inscrição Simulada</div>
+    <div class="card-subtitle">Preencha os dados e escolha o cargo desejado</div>
+
+    <div class="form-group">
+      <label>Nome completo</label>
+      <input type="text" id="nome" placeholder="Ex.: Maria Souza da Silva" maxlength="80" autocomplete="off">
+    </div>
+
+    <div class="form-group">
+      <label>Cargo pretendido</label>
+      <div class="select-wrap">
+        <select id="cargo" onchange="mostrarInfoCargo()"></select>
+      </div>
+      <div id="cargo-info">
+        <div class="ci-row">
+          <div>
+            <div class="ci-label">Vagas ofertadas</div>
+            <div class="ci-vagas" id="ci-vagas">—</div>
+          </div>
+          <div>
+            <span class="ci-jornada" id="ci-jornada">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-inscrever" onclick="inscrever()">
+      ✅ Confirmar Inscrição
+    </button>
+  </div>
+
+  <!-- PAINEL LATERAL: stats + totais -->
+  <div class="card">
+    <div class="card-title">📊 Resumo das Inscrições</div>
+    <div class="card-subtitle">Atualizado em tempo real</div>
+
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="sn" id="total-inscritos">0</div>
+        <div class="sl">Total inscritos</div>
+      </div>
+      <div class="stat-box">
+        <div class="sn" id="total-cargos">0</div>
+        <div class="sl">Cargos c/ inscritos</div>
+      </div>
+      <div class="stat-box stat-box-top3">
+        <div class="sl" style="margin-bottom:8px;">🏆 Top 3 mais disputados</div>
+        <div id="cargo-lider">
+          <div class="top3-empty">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Cargo</th>
+            <th>Nível</th>
+            <th style="text-align:center; min-width:160px">Inscritos</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-body">
+          <tr><td colspan="3" style="text-align:center; color:#9fb0c2; padding:24px;">Nenhuma inscrição ainda.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- LISTA DE INSCRITOS -->
+  <div class="card inscritos-card">
+    <div class="section-head">
+      <div>
+        <div class="card-title">👥 Inscrições</div>
+        <div class="card-subtitle" id="inscritos-subtitle">Todos os candidatos registrados nesta sessão</div>
+      </div>
+
+    </div>
+
+    <!-- BARRA DE FILTRO -->
+    <div class="filtro-wrap">
+      <div class="filtro-search-wrap">
+        <span class="filtro-icon">🔍</span>
+        <input
+          class="filtro-input"
+          type="text"
+          id="filtroInput"
+          placeholder="Buscar por nome ou cargo…"
+          oninput="aplicarFiltro()"
+          autocomplete="off"
+        >
+        <button class="filtro-clear" id="filtroClear" onclick="limparFiltro()" style="display:none;">✕</button>
+      </div>
+      <div class="filtro-chips" id="filtroChips">
+        <button class="chip chip-ativo" data-nivel="" onclick="setChip(this,'')">Todos</button>
+        <button class="chip" data-nivel="superior" onclick="setChip(this,'superior')">Superior</button>
+        <button class="chip" data-nivel="medio" onclick="setChip(this,'medio')">Médio</button>
+        <button class="chip" data-nivel="fundamental" onclick="setChip(this,'fundamental')">Fundamental</button>
+      </div>
+    </div>
+
+    <div id="nota-banner" class="nota-banner bloqueada"><span class="nota-banner-icon">🔒</span><div class="nota-banner-text"><strong>Lançamento de notas bloqueado</strong><small>O administrador ainda não liberou o registro de notas.</small></div></div>
+
+    <div class="inscritos-list" id="inscritos-list">
+      <div class="empty-state">
+        <div class="es-icon">📭</div>
+        Nenhuma inscrição registrada ainda.
+      </div>
+    </div>
+    <div id="filtro-info" style="display:none;"></div>
+  </div>
+
+</div>
+
+<div id="toast">✅ Inscrição realizada com sucesso!</div>
+
+<script>
+  // ── ESTADO ──
+  const state = {
+    inscritos: [],    // {nome, cargo, nivel, ts, nota, notaEdicoes}
+    contadores: {},   // cargo → count
+    notasLiberadas: false,
+    cargos: [
+      { nome: 'Professor de Língua Portuguesa – 20h', emoji: '🗣️', jornada: '20h', vagas: '6453', grupo: 'Magistério e Pedagogia', nivel: 'superior' },
+      { nome: 'Professor de Matemática – 20h',        emoji: '🔢', jornada: '20h', vagas: '6453', grupo: 'Magistério e Pedagogia', nivel: 'superior' },
+      { nome: 'Professor de História – 20h',          emoji: '📜', jornada: '20h', vagas: '6453', grupo: 'Magistério e Pedagogia', nivel: 'superior' },
+      { nome: 'Professor de Geografia – 20h',         emoji: '🌎', jornada: '20h', vagas: '6453', grupo: 'Magistério e Pedagogia', nivel: 'superior' },
+      { nome: 'Professor de Biologia – 20h',          emoji: '🧬', jornada: '20h', vagas: '6453', grupo: 'Magistério e Pedagogia', nivel: 'superior' },
+      { nome: 'Professor de Física – 20h',            emoji: '⚛️', jornada: '20h', vagas: '6453', grupo: 'Magistério e Pedagogia', nivel: 'superior' },
+      { nome: 'Professor de Química – 20h',           emoji: '🧪', jornada: '20h', vagas: '6453', grupo: 'Magistério e Pedagogia', nivel: 'superior' },
+      { nome: 'Professor de Artes – 20h',             emoji: '🎨', jornada: '20h', vagas: '6453', grupo: 'Magistério e Pedagogia', nivel: 'superior' },
+      { nome: 'Professor de Educação Física – 20h',   emoji: '🏃', jornada: '20h', vagas: '6453', grupo: 'Magistério e Pedagogia', nivel: 'superior' },
+      { nome: 'Professor de Filosofia – 20h',         emoji: '🧠', jornada: '20h', vagas: '6453', grupo: 'Magistério e Pedagogia', nivel: 'superior' },
+      { nome: 'Professor de Sociologia – 20h',        emoji: '🤝', jornada: '20h', vagas: '6453', grupo: 'Magistério e Pedagogia', nivel: 'superior' },
+      { nome: 'Professor de Inglês – 20h',            emoji: '🇬🇧', jornada: '20h', vagas: '6453', grupo: 'Magistério e Pedagogia', nivel: 'superior' },
+      { nome: 'Professor de Ciclo – 20h',             emoji: '🔄', jornada: '20h', vagas: '6453', grupo: 'Magistério e Pedagogia', nivel: 'superior' },
+      { nome: 'Professor (Ensino Mediado por Tecnologia) – 20h', emoji: '💻', jornada: '20h', vagas: '6453', grupo: 'Magistério e Pedagogia', nivel: 'superior' },
+      { nome: 'Pedagogo – 20h',                       emoji: '🎓', jornada: '20h', vagas: '394',  grupo: 'Magistério e Pedagogia', nivel: 'superior' },
+      { nome: 'Pedagogo – 40h',                       emoji: '🎓', jornada: '40h', vagas: '100',  grupo: 'Magistério e Pedagogia', nivel: 'superior' },
+      { nome: 'Professor (Tempo Integral – CETI) – 40h', emoji: '🏫', jornada: '40h', vagas: '—', grupo: 'Magistério e Pedagogia', nivel: 'superior' },
+      { nome: 'Pedagogo (Tempo Integral – CETI) – 40h',  emoji: '🏫', jornada: '40h', vagas: '30', grupo: 'Magistério e Pedagogia', nivel: 'superior' },
+      { nome: 'Bibliotecário – 30h',                  emoji: '📚', jornada: '30h', vagas: '63',   grupo: 'Magistério e Pedagogia', nivel: 'superior' },
+      { nome: 'Nutricionista – 30h',                  emoji: '🥗', jornada: '30h', vagas: '15',   grupo: 'Apoio Multidisciplinar/Admin.', nivel: 'superior' },
+      { nome: 'Assistente Social – 30h',              emoji: '🤲', jornada: '30h', vagas: '8',    grupo: 'Apoio Multidisciplinar/Admin.', nivel: 'superior' },
+      { nome: 'Engenheiro – 40h',                     emoji: '🔧', jornada: '40h', vagas: '8',    grupo: 'Apoio Multidisciplinar/Admin.', nivel: 'superior' },
+      { nome: 'Contador – 40h',                       emoji: '📊', jornada: '40h', vagas: '6',    grupo: 'Apoio Multidisciplinar/Admin.', nivel: 'superior' },
+      { nome: 'Psicólogo – 30h',                      emoji: '💬', jornada: '30h', vagas: '4',    grupo: 'Apoio Multidisciplinar/Admin.', nivel: 'superior' },
+      { nome: 'Estatístico – 40h',                    emoji: '📈', jornada: '40h', vagas: '3',    grupo: 'Apoio Multidisciplinar/Admin.', nivel: 'superior' },
+      { nome: 'Assistente Técnico – 40h',             emoji: '🗂️', jornada: '40h', vagas: '449',  grupo: 'Médio/Técnico', nivel: 'medio' },
+      { nome: 'Merendeiro – 40h',                     emoji: '🍽️', jornada: '40h', vagas: '329',  grupo: 'Fundamental', nivel: 'fundamental' },
+    ]
+  };
+
+  // ── RENDER SELECTS DE CARGOS ──
+  function cargoValue(c) {
+    return `${c.nome}|${c.jornada}|${c.vagas}|${c.nivel}`;
+  }
+
+  function renderSelectCargos() {
+    ['cargo', 'editCargo'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      const prev = sel.value;
+      // agrupar por grupo
+      const grupos = {};
+      state.cargos.forEach(c => {
+        if (!grupos[c.grupo]) grupos[c.grupo] = [];
+        grupos[c.grupo].push(c);
+      });
+      const placeholder = id === 'cargo' ? '— Selecione um cargo —' : '— Selecione —';
+      let html = `<option value="">${placeholder}</option>`;
+      for (const grupo in grupos) {
+        const labelGrupo = id === 'cargo' ? `Nível ${grupos[grupo][0].nivel === 'superior' ? 'Superior' : grupos[grupo][0].nivel === 'medio' ? 'Médio/Técnico' : 'Fundamental'} – ${grupo}` : grupo;
+        html += `<optgroup label="${esc(labelGrupo)}">`;
+        grupos[grupo].forEach(c => {
+          const val = cargoValue(c);
+          html += `<option value="${esc(val)}">${c.emoji} ${esc(c.nome)}</option>`;
+        });
+        html += '</optgroup>';
+      }
+      sel.innerHTML = html;
+      if (prev) sel.value = prev;
+    });
+  }
+
+  // ── ABA ADMIN ──
+  let abaAdmin = 'candidatos';
+  function mudarAbaAdmin(aba) {
+    abaAdmin = aba;
+    document.getElementById('abaAdminCandidatos').style.display = aba === 'candidatos' ? 'block' : 'none';
+    document.getElementById('abaAdminCargos').style.display     = aba === 'cargos'     ? 'block' : 'none';
+    document.getElementById('abaAdminTema').style.display       = aba === 'tema'        ? 'block' : 'none';
+    document.getElementById('tabCandidatos').className = 'admin-tab' + (aba === 'candidatos' ? ' admin-tab-ativo' : '');
+    document.getElementById('tabCargos').className     = 'admin-tab' + (aba === 'cargos'     ? ' admin-tab-ativo' : '');
+    document.getElementById('tabTema').className       = 'admin-tab' + (aba === 'tema'        ? ' admin-tab-ativo' : '');
+    if (aba === 'cargos') renderAdminCargos();
+    if (aba === 'tema')   renderAdminTema();
+  }
+
+  // ── TEMA ──
+  const state_tema = {
+    titulo:    'SEDUC-AM — Concurso Público 2026',
+    subtitulo: 'Simulação de inscrição de candidatos por cargo',
+    badge:     '2026'
+  };
+
+  function renderAdminTema() {
+    const el = document.getElementById('adminTemaConteudo');
+    el.innerHTML = `
+      <p style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:14px;">Edite os textos exibidos no cabeçalho da página.</p>
+
+      <div style="margin-bottom:14px;">
+        <label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:6px;">Título principal</label>
+        <input id="temaInputTitulo" type="text" maxlength="80"
+          style="width:100%;padding:12px 14px;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:14px;font-family:var(--sf);"
+          value="${esc(state_tema.titulo)}" placeholder="Ex.: SEDUC-AM — Concurso Público 2026">
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:6px;">Subtítulo</label>
+        <input id="temaInputSubtitulo" type="text" maxlength="100"
+          style="width:100%;padding:12px 14px;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:14px;font-family:var(--sf);"
+          value="${esc(state_tema.subtitulo)}" placeholder="Ex.: Simulação de inscrição de candidatos por cargo">
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:6px;">Badge (etiqueta lateral)</label>
+        <input id="temaInputBadge" type="text" maxlength="20"
+          style="width:100%;padding:12px 14px;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:14px;font-family:var(--sf);"
+          value="${esc(state_tema.badge)}" placeholder="Ex.: 2026">
+      </div>
+
+      <!-- Prévia -->
+      <div style="background:rgba(0,0,0,0.3);border-radius:10px;padding:12px 16px;margin-bottom:16px;border:0.5px solid rgba(255,255,255,0.08);">
+        <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">Prévia</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="flex:1;">
+            <div id="temaPreviewTitulo" style="font-size:13px;font-weight:700;color:#fff;letter-spacing:-0.2px;">${esc(state_tema.titulo)}</div>
+            <div id="temaPreviewSubtitulo" style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;">${esc(state_tema.subtitulo)}</div>
+          </div>
+          <span id="temaPreviewBadge" style="background:rgba(255,159,10,0.18);border:1px solid rgba(255,159,10,0.35);color:#FF9F0A;border-radius:20px;padding:4px 10px;font-size:10px;font-weight:600;letter-spacing:0.4px;text-transform:uppercase;white-space:nowrap;">${esc(state_tema.badge)}</span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;">
+        <button onclick="aplicarTema()" style="flex:1;padding:13px;background:var(--azul-vivo);color:#fff;border:none;border-radius:10px;font-family:var(--sf);font-size:15px;font-weight:600;cursor:pointer;">✅ Aplicar</button>
+        <button onclick="restaurarTema()" style="flex:1;padding:13px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);border:none;border-radius:10px;font-family:var(--sf);font-size:14px;font-weight:600;cursor:pointer;">↩️ Restaurar padrão</button>
+      </div>
+    `;
+
+    // Prévia em tempo real
+    ['temaInputTitulo','temaInputSubtitulo','temaInputBadge'].forEach(id => {
+      document.getElementById(id).addEventListener('input', atualizarPreviewTema);
+    });
+  }
+
+  function atualizarPreviewTema() {
+    const t = document.getElementById('temaInputTitulo').value;
+    const s = document.getElementById('temaInputSubtitulo').value;
+    const b = document.getElementById('temaInputBadge').value;
+    document.getElementById('temaPreviewTitulo').textContent    = t || '—';
+    document.getElementById('temaPreviewSubtitulo').textContent = s || '—';
+    document.getElementById('temaPreviewBadge').textContent     = b || '—';
+  }
+
+  function aplicarTema() {
+    const t = document.getElementById('temaInputTitulo').value.trim();
+    const s = document.getElementById('temaInputSubtitulo').value.trim();
+    const b = document.getElementById('temaInputBadge').value.trim();
+    if (!t) { document.getElementById('temaInputTitulo').style.borderColor='#e05252'; setTimeout(()=>document.getElementById('temaInputTitulo').style.borderColor='',1200); return; }
+    state_tema.titulo    = t;
+    state_tema.subtitulo = s;
+    state_tema.badge     = b;
+    document.getElementById('headerTitulo').textContent    = t;
+    document.getElementById('headerSubtitulo').textContent = s;
+    document.getElementById('headerBadge').textContent     = b;
+    showToast('✅ Tema atualizado no cabeçalho.');
+  }
+
+  function restaurarTema() {
+    state_tema.titulo    = 'SEDUC-AM — Concurso Público 2026';
+    state_tema.subtitulo = 'Simulação de inscrição de candidatos por cargo';
+    state_tema.badge     = '2026';
+    document.getElementById('headerTitulo').textContent    = state_tema.titulo;
+    document.getElementById('headerSubtitulo').textContent = state_tema.subtitulo;
+    document.getElementById('headerBadge').textContent     = state_tema.badge;
+    renderAdminTema();
+    showToast('↩️ Tema restaurado para o padrão.');
+  }
+
+  // ── RENDER ABA CARGOS ──
+  let cargoFiltroTexto = '';
+  function renderAdminCargos() {
+    const el = document.getElementById('adminCargosConteudo');
+    const NIVEL_COLORS = {
+      superior: 'background:rgba(0,122,255,0.15);color:#60aaff;',
+      medio: 'background:rgba(255,159,10,0.15);color:#ffbe45;',
+      fundamental: 'background:rgba(255,59,48,0.12);color:#ff7b72;'
+    };
+    const NIVEL_LABELS = { superior: 'Superior', medio: 'Médio', fundamental: 'Fundamental' };
+
+    const filtrados = state.cargos.map((c, i) => ({...c, i})).filter(c =>
+      !cargoFiltroTexto || c.nome.toLowerCase().includes(cargoFiltroTexto) || c.grupo.toLowerCase().includes(cargoFiltroTexto)
+    );
+
+    let html = `
+      <button class="cargo-add-btn" onclick="abrirModalCargo(null)">➕ Adicionar cargo</button>
+      <input class="cargo-search" type="text" placeholder="🔍  Buscar cargo…" value="${esc(cargoFiltroTexto)}"
+        oninput="cargoFiltroTexto=this.value.trim().toLowerCase();renderAdminCargos();">
+      <p style="font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:8px;">${filtrados.length} de ${state.cargos.length} cargo(s)</p>
+      <div class="cargo-list-wrap">
+    `;
+    if (filtrados.length === 0) {
+      html += `<div style="text-align:center;color:rgba(255,255,255,0.3);font-size:13px;padding:24px;">Nenhum cargo encontrado.</div>`;
+    } else {
+      filtrados.forEach(c => {
+        html += `
+        <div class="cargo-row-admin">
+          <span style="font-size:16px;flex-shrink:0;">${c.emoji}</span>
+          <div class="cargo-row-nome">
+            ${esc(c.nome)}
+            <div class="cargo-row-grupo">${esc(c.grupo)} · ${c.jornada} · ${c.vagas === '—' ? 'vagas a definir' : c.vagas + ' vagas'}</div>
+          </div>
+          <span class="cargo-row-nivel" style="${NIVEL_COLORS[c.nivel] || ''}">${NIVEL_LABELS[c.nivel] || c.nivel}</span>
+          <button class="admin-action-btn btn-edit" onclick="abrirModalCargo(${c.i})" title="Editar cargo">✏️</button>
+          <button class="admin-action-btn btn-del" onclick="excluirCargo(${c.i})" title="Excluir cargo">🗑️</button>
+        </div>`;
+      });
+    }
+    html += `</div>`;
+    el.innerHTML = html;
+  }
+
+  // ── MODAL CARGO ──
+  let cargoEditIdx = null;
+  function abrirModalCargo(idx) {
+    cargoEditIdx = idx;
+    if (idx === null) {
+      document.getElementById('cargoModalTitle').textContent = '➕ Adicionar Cargo';
+      document.getElementById('cargoNome').value = '';
+      document.getElementById('cargoEmoji').value = '';
+      document.getElementById('cargoJornada').value = '';
+      document.getElementById('cargoVagas').value = '';
+      document.getElementById('cargoGrupo').value = '';
+      document.getElementById('cargoNivel').value = 'superior';
+    } else {
+      const c = state.cargos[idx];
+      document.getElementById('cargoModalTitle').textContent = '✏️ Editar Cargo';
+      document.getElementById('cargoNome').value = c.nome;
+      document.getElementById('cargoEmoji').value = c.emoji;
+      document.getElementById('cargoJornada').value = c.jornada;
+      document.getElementById('cargoVagas').value = c.vagas;
+      document.getElementById('cargoGrupo').value = c.grupo;
+      document.getElementById('cargoNivel').value = c.nivel;
+    }
+    document.getElementById('modalCargo').classList.add('open');
+    setTimeout(() => document.getElementById('cargoNome').focus(), 100);
+  }
+
+  function fecharModalCargo() {
+    document.getElementById('modalCargo').classList.remove('open');
+    cargoEditIdx = null;
+  }
+
+  function salvarCargo() {
+    const nome    = document.getElementById('cargoNome').value.trim();
+    const emoji   = document.getElementById('cargoEmoji').value.trim() || '📌';
+    const jornada = document.getElementById('cargoJornada').value.trim() || '—';
+    const vagas   = document.getElementById('cargoVagas').value.trim() || '—';
+    const grupo   = document.getElementById('cargoGrupo').value.trim() || 'Outros';
+    const nivel   = document.getElementById('cargoNivel').value;
+    if (!nome) { document.getElementById('cargoNome').style.borderColor='#e05252'; setTimeout(()=>document.getElementById('cargoNome').style.borderColor='',1200); return; }
+    if (cargoEditIdx === null) {
+      state.cargos.push({ nome, emoji, jornada, vagas, grupo, nivel });
+      showToast('✅ Cargo adicionado.');
+    } else {
+      const antigoCargo = state.cargos[cargoEditIdx];
+      // Atualizar inscritos que tinham o cargo antigo
+      state.inscritos.forEach(ins => {
+        if (ins.cargo === antigoCargo.nome) {
+          ins.cargo = nome;
+          ins.nivel = nivel;
+        }
+      });
+      // Atualizar contadores
+      if (antigoCargo.nome !== nome && state.contadores[antigoCargo.nome]) {
+        state.contadores[nome] = state.contadores[antigoCargo.nome];
+        delete state.contadores[antigoCargo.nome];
+      }
+      state.cargos[cargoEditIdx] = { nome, emoji, jornada, vagas, grupo, nivel };
+      showToast('✅ Cargo atualizado.');
+    }
+    fecharModalCargo();
+    renderSelectCargos();
+    renderAdminCargos();
+    renderLista(); renderTabela(); renderStats();
+  }
+
+  function excluirCargo(idx) {
+    const c = state.cargos[idx];
+    const emUso = state.inscritos.some(ins => ins.cargo === c.nome);
+    if (emUso) {
+      if (!confirm(`O cargo "${c.nome}" tem inscritos. Excluir mesmo assim?`)) return;
+    } else {
+      if (!confirm(`Excluir o cargo "${c.nome}"?`)) return;
+    }
+    state.cargos.splice(idx, 1);
+    renderSelectCargos();
+    renderAdminCargos();
+    renderLista(); renderTabela(); renderStats();
+    showToast('🗑️ Cargo removido.');
+  }
+
+  const NIVEL_MAP = { superior: 'superior', medio: 'medio', fundamental: 'fundamental' };
+  const NIVEL_LABEL = { superior: 'Superior', medio: 'Médio/Técnico', fundamental: 'Fundamental' };
+  const NIVEL_CLASS = { superior: 'nivel-superior', medio: 'nivel-medio', fundamental: 'nivel-fundamental' };
+
+  // inicializar selects
+  renderSelectCargos();
+
+  // ── INFO CARGO ──
+  function mostrarInfoCargo() {
+    const sel = document.getElementById('cargo');
+    const box = document.getElementById('cargo-info');
+    if (!sel.value) { box.style.display = 'none'; return; }
+    const [, jornada, vagas] = sel.value.split('|');
+    document.getElementById('ci-vagas').textContent = vagas === '—' ? 'A definir' : Number(vagas).toLocaleString('pt-BR');
+    document.getElementById('ci-jornada').textContent = `⏱ ${jornada} semanais`;
+    box.style.display = 'block';
+  }
+
+  // ── INSCREVER ──
+  function inscrever() {
+    const nomeEl = document.getElementById('nome');
+    const cargoEl = document.getElementById('cargo');
+
+    const nome = nomeEl.value.trim();
+    if (!nome) { nomeEl.focus(); shake(nomeEl); return; }
+    if (!cargoEl.value) { shake(cargoEl); return; }
+
+    const parts = cargoEl.value.split('|');
+    const cargo = parts[0];
+    const nivel = parts[3];
+
+    // Adiciona
+    state.inscritos.unshift({ nome, cargo, nivel, ts: new Date(), nota: null, notaEdicoes: 0 });
+    state.contadores[cargo] = (state.contadores[cargo] || 0) + 1;
+
+    // Reset form
+    nomeEl.value = '';
+    cargoEl.value = '';
+    document.getElementById('cargo-info').style.display = 'none';
+
+    renderLista();
+    renderTabela();
+    renderStats();
+    showToast('✅ Inscrição de ' + nome + ' registrada!');
+  }
+
+  // ── ESTADO FILTRO ──
+  let filtroTexto = '';
+  let filtroNivel = '';
+
+  function aplicarFiltro() {
+    const input = document.getElementById('filtroInput');
+    filtroTexto = input ? input.value.trim().toLowerCase() : '';
+    const clearBtn = document.getElementById('filtroClear');
+    if (clearBtn) clearBtn.style.display = filtroTexto ? 'flex' : 'none';
+    renderLista();
+  }
+
+  function limparFiltro() {
+    filtroTexto = '';
+    const input = document.getElementById('filtroInput');
+    if (input) input.value = '';
+    const clearBtn = document.getElementById('filtroClear');
+    if (clearBtn) clearBtn.style.display = 'none';
+    renderLista();
+  }
+
+  function setChip(el, nivel) {
+    filtroNivel = nivel;
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('chip-ativo'));
+    el.classList.add('chip-ativo');
+    renderLista();
+  }
+
+  function getFiltrados() {
+    return state.inscritos.map((i, idx) => ({ ...i, idx })).filter(i => {
+      const matchTexto = !filtroTexto ||
+        i.nome.toLowerCase().includes(filtroTexto) ||
+        i.cargo.toLowerCase().includes(filtroTexto);
+      const matchNivel = !filtroNivel || i.nivel === filtroNivel;
+      return matchTexto && matchNivel;
+    });
+  }
+
+  // ── RENDER LISTA ──
+  function renderLista() {
+    const el = document.getElementById('inscritos-list');
+    // atualiza banner
+    const banner = document.getElementById('nota-banner');
+    if (state.notasLiberadas) {
+      banner.className = 'nota-banner liberada';
+      banner.innerHTML = `<span class="nota-banner-icon">✅</span><div class="nota-banner-text"><strong>Lançamento de notas liberado!</strong><small>Insira sua nota obtida na prova no campo abaixo.</small></div>`;
+    } else {
+      banner.className = 'nota-banner bloqueada';
+      banner.innerHTML = `<span class="nota-banner-icon">🔒</span><div class="nota-banner-text"><strong>Lançamento de notas bloqueado</strong><small>O administrador ainda não liberou o registro de notas.</small></div>`;
+    }
+    if (state.inscritos.length === 0) {
+      el.innerHTML = `<div class="empty-state"><div class="es-icon">📭</div>Nenhuma inscrição registrada ainda.</div>`;
+      updateSubtitle(0, 0);
+      return;
+    }
+
+    const filtrados = getFiltrados();
+    const total = state.inscritos.length;
+    updateSubtitle(filtrados.length, total);
+
+    if (filtrados.length === 0) {
+      el.innerHTML = `<div class="empty-state"><div class="es-icon">🔍</div>Nenhum resultado encontrado.<br><span style="font-size:12px;color:var(--cinza-3);">Tente outro nome ou cargo.</span></div>`;
+      return;
+    }
+
+    el.innerHTML = filtrados.map(i => {
+      const idx = i.idx;
+      const ini = i.nome.split(' ').map(p => p[0]).slice(0,2).join('').toUpperCase();
+      const hora = i.ts.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+      const edicoes = i.notaEdicoes || 0;
+      const MAX_EDICOES = 3;
+      const limiteAtingido = edicoes >= MAX_EDICOES;
+      const temNota = i.nota !== undefined && i.nota !== null && i.nota !== '';
+      let notaHtml;
+
+      if (!state.notasLiberadas) {
+        notaHtml = `<div class="nota-wrap">
+          <span class="nota-bloqueada-msg">🔒 Nota bloqueada pelo administrador</span>
+        </div>`;
+      } else if (temNota) {
+        const restantes = MAX_EDICOES - edicoes;
+        const podeEditar = restantes > 0;
+        const contadorClass = !podeEditar ? 'edicoes-esgotadas' : restantes === 1 ? 'edicoes-alerta' : 'edicoes-ok';
+        const contadorHtml = podeEditar
+          ? `<span class="edicoes-counter ${contadorClass}" title="Alterações restantes">✏️ ${restantes}x restante${restantes > 1 ? 's' : ''}</span>`
+          : `<span class="edicoes-counter edicoes-esgotadas" title="Limite atingido — somente o administrador pode alterar">🔐 Bloqueado</span>`;
+        notaHtml = `<div class="nota-wrap">
+          <span style="font-size:11px;color:#6b7f96;font-weight:600;">📊 NOTA:</span>
+          <span class="nota-badge">🎯 ${i.nota}</span>
+          ${podeEditar
+            ? `<button class="nota-salvar-btn" style="font-size:11px;padding:4px 10px;background:#2a5298;" onclick="editarNota(${idx})">✏️ Alterar</button>`
+            : `<button class="nota-salvar-btn" disabled title="Limite de alterações atingido">🔐 Limite atingido</button>`
+          }
+          ${contadorHtml}
+        </div>`;
+      } else if (limiteAtingido) {
+        // Sem nota, mas esgotou edições (caso raro — admin zerou)
+        notaHtml = `<div class="nota-wrap">
+          <span class="nota-bloqueada-msg">🔐 Sem nota — somente administrador pode inserir</span>
+        </div>`;
+      } else {
+        const restantes = MAX_EDICOES - edicoes;
+        notaHtml = `<div class="nota-wrap">
+          <input class="nota-input" type="number" min="0" max="100" step="0.1" placeholder="0–100" id="nota-${idx}">
+          <button class="nota-salvar-btn" onclick="salvarNota(${idx})">✔ Salvar nota</button>
+          <span class="edicoes-counter ${restantes === 1 ? 'edicoes-alerta' : 'edicoes-ok'}" title="Você poderá alterar até ${MAX_EDICOES} vezes">✏️ ${restantes}x restante${restantes > 1 ? 's' : ''}</span>
+        </div>`;
+      }
+      return `
+        <div class="inscrito-item" style="flex-wrap:wrap;">
+          <div class="inscrito-avatar">${ini}</div>
+          <div style="flex:1;min-width:120px;">
+            <div class="inscrito-nome">${esc(i.nome)}</div>
+            <div class="inscrito-cargo">${esc(i.cargo)}</div>
+            ${notaHtml}
+          </div>
+          <div class="inscrito-hora">${hora}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function updateSubtitle(filtrados, total) {
+    const sub = document.getElementById('inscritos-subtitle');
+    if (!sub) return;
+    if (filtrados === total) {
+      sub.textContent = total === 0
+        ? 'Nenhum candidato registrado ainda.'
+        : `${total} candidato${total !== 1 ? 's' : ''} registrado${total !== 1 ? 's' : ''}`;
+    } else {
+      sub.innerHTML = `<span style="color:var(--azul-vivo);font-weight:600;">${filtrados}</span> de ${total} candidato${total !== 1 ? 's' : ''}`;
+    }
+  }
+
+  // ── RENDER TABELA ──
+  function renderTabela() {
+    const tbody = document.getElementById('tabela-body');
+    const entries = Object.entries(state.contadores).sort((a,b) => b[1]-a[1]);
+    if (entries.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#9fb0c2; padding:24px;">Nenhuma inscrição ainda.</td></tr>`;
+      return;
+    }
+    const max = Math.max(...entries.map(e=>e[1]));
+    tbody.innerHTML = entries.map(([cargo, count]) => {
+      const nivel = getNivel(cargo);
+      const pct = Math.round((count / max) * 100);
+      return `
+        <tr>
+          <td>${esc(cargo)}</td>
+          <td><span class="nivel-badge ${NIVEL_CLASS[nivel]}">${NIVEL_LABEL[nivel]}</span></td>
+          <td class="bar-cell">
+            <div class="bar-wrap">
+              <div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div>
+              <div class="bar-count">${count}</div>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // ── RENDER STATS ──
+  function renderStats() {
+    const total = state.inscritos.length;
+    const cargosCount = Object.keys(state.contadores).length;
+    const entries = Object.entries(state.contadores).sort((a,b)=>b[1]-a[1]);
+    document.getElementById('total-inscritos').textContent = total;
+    document.getElementById('total-cargos').textContent = cargosCount;
+    const liderEl = document.getElementById('cargo-lider');
+    if (entries.length === 0) {
+      liderEl.innerHTML = '<div class="top3-empty">—</div>';
+    } else {
+      const medals = ['gold','silver','bronze'];
+      const nums = ['1º','2º','3º'];
+      liderEl.innerHTML = entries.slice(0,3).map(([cargo, count], i) => `
+        <div class="top3-item">
+          <span class="top3-pos ${medals[i]}">${nums[i]}</span>
+          <span class="top3-nome">${esc(cargo.split(' – ')[0])}</span>
+          <span class="top3-count">${count}</span>
+        </div>
+      `).join('');
+    }
+  }
+
+  // ── HELPERS ──
+  function getNivel(cargo) {
+    const c = state.cargos.find(c => c.nome === cargo);
+    return c ? c.nivel : 'superior';
+  }
+
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function shake(el) {
+    el.style.animation = 'none';
+    el.style.borderColor = '#e05252';
+    setTimeout(()=>{ el.style.borderColor = ''; }, 1200);
+    el.focus();
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=> t.classList.remove('show'), 2800);
+  }
+
+  function limparTudo() {
+    if (state.inscritos.length === 0) return;
+    if (!confirm('Deseja remover todas as inscrições desta sessão?')) return;
+    state.inscritos = [];
+    state.contadores = {};
+    limparFiltro();
+    renderLista(); renderTabela(); renderStats();
+    showToast('🗑️ Todas as inscrições foram removidas.');
+  }
+
+  // ── ADMIN ──
+  document.getElementById('adminTrigger').addEventListener('dblclick', function() {
+    document.getElementById('modalAdmin').classList.add('open');
+    setTimeout(() => document.getElementById('senhaAdmin').focus(), 100);
+  });
+
+  // Hash SHA-256 de 'atlanta' — senha nunca fica em texto puro no código
+  const ADMIN_HASH = 'd3ecc5b7fe38ffd3397473362f2c42321fb82deb23083ed13cf6f20320ab6c92';
+
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  async function verificarSenha() {
+    const val = document.getElementById('senhaAdmin').value.trim().toLowerCase();
+    const hash = await sha256(val);
+    if (hash === ADMIN_HASH) {
+      fecharModal();
+      abrirAdmin();
+    } else {
+      const erroEl = document.getElementById('modalErro');
+      erroEl.textContent = '❌ Palavra-chave incorreta.';
+      document.getElementById('senhaAdmin').value = '';
+      document.getElementById('senhaAdmin').focus();
+      setTimeout(() => erroEl.textContent = '', 2500);
+    }
+  }
+
+  function fecharModal() {
+    document.getElementById('modalAdmin').classList.remove('open');
+    document.getElementById('senhaAdmin').value = '';
+    document.getElementById('modalErro').textContent = '';
+  }
+
+  function abrirAdmin() {
+    renderAdminPanel();
+    const panel = document.getElementById('adminPanel');
+    panel.classList.add('open');
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function renderAdminPanel() {
+    const conteudo = document.getElementById('adminConteudo');
+    const sorted = [...state.inscritos].map((ins, originalIdx) => ({...ins, originalIdx}))
+                    .sort((a,b) => a.nome.localeCompare(b.nome));
+
+    let html = `<button class="admin-add-btn" onclick="abrirModalAdd()">➕ Adicionar candidato</button>`;
+
+    if (sorted.length === 0) {
+      html += `<p style="color:rgba(255,255,255,0.5);font-size:13px;text-align:center;padding:16px 0;">Nenhuma inscrição registrada ainda.</p>`;
+    } else {
+      const MAX_EDICOES = 3;
+      html += `
+        <div style="overflow-x:auto;">
+        <table class="admin-table">
+          <thead><tr><th>#</th><th>Nome</th><th>Cargo</th><th>Nota</th><th>Edições</th><th>Ações</th></tr></thead>
+          <tbody>${sorted.map((i, idx) => {
+            const edicoes = i.notaEdicoes || 0;
+            const limiteAtingido = edicoes >= MAX_EDICOES;
+            const temNota = i.nota !== undefined && i.nota !== null && i.nota !== '';
+            const notaCell = temNota
+              ? `<span style="font-weight:800;color:#00d98b;">${i.nota}</span>`
+              : `<span style="color:rgba(255,255,255,0.3);">—</span>`;
+            const edicoesCell = limiteAtingido
+              ? `<span style="color:#ff9090;font-weight:700;font-size:11px;">🔐 ${edicoes}/${MAX_EDICOES}</span>`
+              : `<span style="color:rgba(255,255,255,0.6);font-size:11px;">${edicoes}/${MAX_EDICOES}</span>`;
+            return `
+            <tr>
+              <td>${idx+1}</td>
+              <td>${esc(i.nome)}</td>
+              <td>${esc(i.cargo.split(' – ')[0])}</td>
+              <td>${notaCell}</td>
+              <td>${edicoesCell}</td>
+              <td style="white-space:nowrap;">
+                <button class="admin-action-btn btn-edit" onclick="abrirModalEdit(${i.originalIdx})" title="Editar cadastro">✏️</button>
+                <button class="admin-action-btn" style="background:rgba(0,168,107,0.2);color:#00d98b;" onclick="adminEditarNota(${i.originalIdx})" title="Alterar nota (admin)">📝</button>
+                <button class="admin-action-btn" style="background:rgba(245,180,0,0.2);color:#f5d060;" onclick="adminResetarNota(${i.originalIdx})" title="Resetar nota e contador">🔄</button>
+                <button class="admin-action-btn btn-del" onclick="excluirCandidato(${i.originalIdx})" title="Excluir candidato">🗑️</button>
+              </td>
+            </tr>`;
+          }).join('')}
+          </tbody>
+        </table>
+        </div>
+        <p style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:10px;">
+          Total: ${state.inscritos.length} inscrito(s) &nbsp;·&nbsp;
+          📝 = alterar nota &nbsp;·&nbsp; 🔄 = resetar nota/contador
+        </p>
+      `;
+    }
+    conteudo.innerHTML = html;
+  }
+
+  // ── EXCLUIR ──
+  function excluirCandidato(idx) {
+    if (!confirm(`Excluir "${state.inscritos[idx].nome}"?`)) return;
+    const cargo = state.inscritos[idx].cargo;
+    state.inscritos.splice(idx, 1);
+    state.contadores[cargo]--;
+    if (state.contadores[cargo] <= 0) delete state.contadores[cargo];
+    renderLista(); renderTabela(); renderStats();
+    renderAdminPanel();
+    showToast('🗑️ Candidato removido.');
+  }
+
+  // ── EDITAR ──
+  let editIdx = null;
+  function abrirModalEdit(idx) {
+    editIdx = idx;
+    const ins = state.inscritos[idx];
+    document.getElementById('editTitle').textContent = '✏️ Editar Candidato';
+    document.getElementById('editNome').value = ins.nome;
+    // Seleciona o cargo correto
+    const sel = document.getElementById('editCargo');
+    let found = false;
+    for (const opt of sel.options) {
+      if (opt.value.startsWith(ins.cargo + '|') || opt.value === ins.cargo) {
+        sel.value = opt.value; found = true; break;
+      }
+    }
+    if (!found) sel.value = '';
+    document.getElementById('modalEdit').classList.add('open');
+    setTimeout(() => document.getElementById('editNome').focus(), 100);
+  }
+
+  // ── ADICIONAR ──
+  function abrirModalAdd() {
+    editIdx = null;
+    document.getElementById('editTitle').textContent = '➕ Adicionar Candidato';
+    document.getElementById('editNome').value = '';
+    document.getElementById('editCargo').value = '';
+    document.getElementById('modalEdit').classList.add('open');
+    setTimeout(() => document.getElementById('editNome').focus(), 100);
+  }
+
+  function fecharModalEdit() {
+    document.getElementById('modalEdit').classList.remove('open');
+    editIdx = null;
+  }
+
+  function salvarEdicao() {
+    const nome = document.getElementById('editNome').value.trim();
+    const cargoVal = document.getElementById('editCargo').value;
+    if (!nome) { document.getElementById('editNome').style.borderColor='#e05252'; setTimeout(()=>document.getElementById('editNome').style.borderColor='',1200); return; }
+    if (!cargoVal) { return; }
+    const cargo = cargoVal.split('|')[0];
+    const nivel = cargoVal.split('|')[3];
+
+    if (editIdx !== null) {
+      // Editar existente
+      const antigoCargo = state.inscritos[editIdx].cargo;
+      if (antigoCargo !== cargo) {
+        state.contadores[antigoCargo]--;
+        if (state.contadores[antigoCargo] <= 0) delete state.contadores[antigoCargo];
+        state.contadores[cargo] = (state.contadores[cargo] || 0) + 1;
+      }
+      state.inscritos[editIdx].nome = nome;
+      state.inscritos[editIdx].cargo = cargo;
+      state.inscritos[editIdx].nivel = nivel;
+      showToast('✅ Candidato atualizado.');
+    } else {
+      // Adicionar novo
+      state.inscritos.unshift({ nome, cargo, nivel, ts: new Date() });
+      state.contadores[cargo] = (state.contadores[cargo] || 0) + 1;
+      showToast('✅ Candidato adicionado.');
+    }
+
+    fecharModalEdit();
+    renderLista(); renderTabela(); renderStats();
+    renderAdminPanel();
+  }
+
+  function fecharAdmin() {
+    document.getElementById('adminPanel').classList.remove('open');
+  }
+
+  function adminLimparTudo() {
+    if (state.inscritos.length === 0) { showToast('ℹ️ Nenhuma inscrição para remover.'); return; }
+    if (!confirm('Confirmar remoção de todas as inscrições?')) return;
+    state.inscritos = [];
+    state.contadores = {};
+    renderLista(); renderTabela(); renderStats();
+    renderAdminPanel();
+    showToast('🗑️ Todas as inscrições foram removidas.');
+  }
+
+  // ── NOTAS ──
+  function toggleNotas() {
+    state.notasLiberadas = !state.notasLiberadas;
+    const btn = document.getElementById('toggleNotaBtn');
+    const desc = document.getElementById('toggleNotaDesc');
+    if (state.notasLiberadas) {
+      btn.textContent = '🔓 Liberado';
+      btn.className = 'toggle-btn unlocked';
+      if (desc) desc.textContent = 'Notas liberadas — candidatos podem inserir suas notas.';
+      showToast('🔓 Lançamento de notas LIBERADO! Os candidatos já podem inserir suas notas.');
+    } else {
+      btn.textContent = '🔒 Bloqueado';
+      btn.className = 'toggle-btn locked';
+      if (desc) desc.textContent = 'Notas bloqueadas — candidatos não podem inserir.';
+      showToast('🔒 Lançamento de notas BLOQUEADO.');
+    }
+    renderLista();
+  }
+
+  function salvarNota(idx) {
+    const input = document.getElementById('nota-' + idx);
+    if (!input) return;
+    const val = parseFloat(input.value);
+    if (isNaN(val) || val < 0 || val > 100) {
+      input.style.borderColor = '#e05252';
+      setTimeout(() => input.style.borderColor = '', 1200);
+      showToast('⚠️ Nota inválida. Use um valor entre 0 e 100.');
+      return;
+    }
+    const MAX_EDICOES = 3;
+    const ins = state.inscritos[idx];
+    const edicoes = ins.notaEdicoes || 0;
+    if (edicoes >= MAX_EDICOES) {
+      showToast('🔐 Limite de alterações atingido. Contate o administrador.');
+      return;
+    }
+    ins.nota = val.toFixed(1);
+    ins.notaEdicoes = edicoes + 1;
+    renderLista();
+    const restantes = MAX_EDICOES - ins.notaEdicoes;
+    if (restantes === 0) {
+      showToast('✅ Nota salva: ' + val.toFixed(1) + ' — Limite de alterações atingido!');
+    } else {
+      showToast('✅ Nota salva: ' + val.toFixed(1) + ' — Você ainda pode alterar ' + restantes + 'x.');
+    }
+  }
+
+  function editarNota(idx) {
+    const MAX_EDICOES = 3;
+    const ins = state.inscritos[idx];
+    const edicoes = ins.notaEdicoes || 0;
+    if (edicoes >= MAX_EDICOES) {
+      showToast('🔐 Limite de alterações atingido. Somente o administrador pode alterar.');
+      return;
+    }
+    ins.nota = null;
+    renderLista();
+    setTimeout(() => { const inp = document.getElementById('nota-' + idx); if(inp) inp.focus(); }, 50);
+  }
+
+  // Admin pode resetar o contador de edições de um candidato
+  function adminResetarNota(idx) {
+    if (!confirm('Resetar nota e contador de edições de "' + state.inscritos[idx].nome + '"?')) return;
+    state.inscritos[idx].nota = null;
+    state.inscritos[idx].notaEdicoes = 0;
+    renderLista();
+    renderAdminPanel();
+    showToast('🔄 Nota e contador resetados para ' + state.inscritos[idx].nome + '.');
+  }
+
+  // Admin pode forçar alteração de nota sem usar o contador do candidato
+  function adminEditarNota(idx) {
+    const novaStr = prompt('Nova nota para ' + state.inscritos[idx].nome + ' (0–100):', state.inscritos[idx].nota || '');
+    if (novaStr === null) return;
+    const val = parseFloat(novaStr.replace(',', '.'));
+    if (isNaN(val) || val < 0 || val > 100) {
+      showToast('⚠️ Nota inválida.');
+      return;
+    }
+    state.inscritos[idx].nota = val.toFixed(1);
+    renderLista();
+    renderAdminPanel();
+    showToast('✅ Nota alterada pelo administrador: ' + val.toFixed(1));
+  }
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(r => console.log('SW registrado:', r.scope))
+        .catch(e => console.warn('SW falhou:', e));
+    });
+  }
+</script>
+</body>
+</html>

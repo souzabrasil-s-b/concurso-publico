@@ -1,0 +1,15 @@
+# Firebase
+.firebase/
+.firebaserc
+
+# Node
+node_modules/
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log
+
+# Env
+.env
+.env.local
