@@ -1480,12 +1480,21 @@
 
   // ── ADMIN ──
   document.getElementById('adminTrigger').addEventListener('dblclick', function() {
+    if (_adminBloqueado) return;
     document.getElementById('modalAdmin').classList.add('open');
     setTimeout(() => document.getElementById('senhaAdmin').focus(), 100);
   });
 
-  // Hash SHA-256 de 'atlanta' — senha nunca fica em texto puro no código
-  const ADMIN_HASH = 'd3ecc5b7fe38ffd3397473362f2c42321fb82deb23083ed13cf6f20320ab6c92';
+  // Hash SHA-256 com salt — senha nunca fica em texto puro no código
+  // Salt: 'CP2026_xZ7' | Senha: 'atlanta'
+  const ADMIN_HASH = '953eb3ee5c00f36e32618cd71ce56356925960fad6a72300d3081a174a44c4a3';
+  const ADMIN_SALT = 'CP2026_xZ7';
+
+  // Controle de tentativas
+  let _adminTentativas = 0;
+  let _adminBloqueado  = false;
+  const MAX_TENTATIVAS = 5;
+  const BLOQUEIO_MS    = 60000; // 1 minuto
 
   async function sha256(str) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -1493,17 +1502,34 @@
   }
 
   async function verificarSenha() {
+    if (_adminBloqueado) {
+      document.getElementById('modalErro').textContent = '🔒 Acesso bloqueado. Aguarde 1 minuto.';
+      return;
+    }
     const val = document.getElementById('senhaAdmin').value.trim().toLowerCase();
-    const hash = await sha256(val);
+    const hash = await sha256(ADMIN_SALT + val);
     if (hash === ADMIN_HASH) {
+      _adminTentativas = 0;
       fecharModal();
       abrirAdmin();
     } else {
+      _adminTentativas++;
+      const restantes = MAX_TENTATIVAS - _adminTentativas;
       const erroEl = document.getElementById('modalErro');
-      erroEl.textContent = '❌ Palavra-chave incorreta.';
       document.getElementById('senhaAdmin').value = '';
       document.getElementById('senhaAdmin').focus();
-      setTimeout(() => erroEl.textContent = '', 2500);
+      if (_adminTentativas >= MAX_TENTATIVAS) {
+        _adminBloqueado = true;
+        erroEl.textContent = '🔒 Muitas tentativas. Bloqueado por 1 minuto.';
+        setTimeout(() => {
+          _adminBloqueado  = false;
+          _adminTentativas = 0;
+          erroEl.textContent = '';
+        }, BLOQUEIO_MS);
+      } else {
+        erroEl.textContent = `❌ Palavra-chave incorreta. ${restantes} tentativa${restantes > 1 ? 's' : ''} restante${restantes > 1 ? 's' : ''}.`;
+        setTimeout(() => erroEl.textContent = '', 3000);
+      }
     }
   }
 
