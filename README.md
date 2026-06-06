@@ -1,6 +1,6 @@
 # SEDUC-AM — Simulação de Inscrição Concurso 2026 
 
-PWA de simulação de inscrições para o Concurso Público SEDUC-AM 2026.       
+PWA de simulação de inscrições para o Concurso Público SEDUC-AM 2026.          
 Deploy automático via **GitHub Actions → Firebase Hosting**.
 
 ---
