@@ -1190,19 +1190,19 @@
     const cargo = parts[0];
     const nivel = parts[3];
 
-    // Adiciona
-    state.inscritos.unshift({ nome, cargo, nivel, ts: new Date(), nota: null, notaEdicoes: 0 });
-    state.contadores[cargo] = (state.contadores[cargo] || 0) + 1;
-
     // Reset form
     nomeEl.value = '';
     cargoEl.value = '';
     document.getElementById('cargo-info').style.display = 'none';
-
-    renderLista();
-    renderTabela();
-    renderStats();
     showToast('✅ Inscrição de ' + nome + ' registrada!');
+    // Salva no Firestore — onSnapshot atualiza a tela para todos
+    if (window.salvarInscricaoFirestore) {
+      window.salvarInscricaoFirestore({ nome, cargo, nivel });
+    } else {
+      state.inscritos.unshift({ nome, cargo, nivel, ts: new Date(), nota: null, notaEdicoes: 0 });
+      state.contadores[cargo] = (state.contadores[cargo] || 0) + 1;
+      renderLista(); renderTabela(); renderStats();
+    }
   }
 
   // ── ESTADO FILTRO ──
@@ -1522,12 +1522,17 @@
   // ── EXCLUIR ──
   function excluirCandidato(idx) {
     if (!confirm(`Excluir "${state.inscritos[idx].nome}"?`)) return;
-    const cargo = state.inscritos[idx].cargo;
-    state.inscritos.splice(idx, 1);
-    state.contadores[cargo]--;
-    if (state.contadores[cargo] <= 0) delete state.contadores[cargo];
-    renderLista(); renderTabela(); renderStats();
-    renderAdminPanel();
+    const id = state.inscritos[idx]._id;
+    if (window.excluirInscricaoFirestore && id) {
+      window.excluirInscricaoFirestore(id);
+    } else {
+      const cargo = state.inscritos[idx].cargo;
+      state.inscritos.splice(idx, 1);
+      state.contadores[cargo]--;
+      if (state.contadores[cargo] <= 0) delete state.contadores[cargo];
+      renderLista(); renderTabela(); renderStats();
+      renderAdminPanel();
+    }
     showToast('🗑️ Candidato removido.');
   }
 
@@ -1605,10 +1610,14 @@
   function adminLimparTudo() {
     if (state.inscritos.length === 0) { showToast('ℹ️ Nenhuma inscrição para remover.'); return; }
     if (!confirm('Confirmar remoção de todas as inscrições?')) return;
-    state.inscritos = [];
-    state.contadores = {};
-    renderLista(); renderTabela(); renderStats();
-    renderAdminPanel();
+    if (window.limparTudoFirestore) {
+      window.limparTudoFirestore();
+    } else {
+      state.inscritos = [];
+      state.contadores = {};
+      renderLista(); renderTabela(); renderStats();
+      renderAdminPanel();
+    }
     showToast('🗑️ Todas as inscrições foram removidas.');
   }
 
@@ -1650,6 +1659,9 @@
     }
     ins.nota = val.toFixed(1);
     ins.notaEdicoes = edicoes + 1;
+    if (window.atualizarNotaFirestore && ins._id) {
+      window.atualizarNotaFirestore(ins._id, ins.nota, ins.notaEdicoes);
+    }
     renderLista();
     const restantes = MAX_EDICOES - ins.notaEdicoes;
     if (restantes === 0) {
@@ -1696,6 +1708,79 @@
     renderAdminPanel();
     showToast('✅ Nota alterada pelo administrador: ' + val.toFixed(1));
   }
+</script>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAM7s5iHTWWtL3xF6CLKHvmfYp2nZREp1s",
+    authDomain: "concurso-publico-7b2cb.firebaseapp.com",
+    databaseURL: "https://concurso-publico-7b2cb-default-rtdb.firebaseio.com",
+    projectId: "concurso-publico-7b2cb",
+    storageBucket: "concurso-publico-7b2cb.firebasestorage.app",
+    messagingSenderId: "788794774848",
+    appId: "1:788794774848:web:8152642642088df37956a5",
+    measurementId: "G-65RFCJV93X"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const inscritosCol = collection(db, 'inscritos');
+
+  // ── ESCUTA EM TEMPO REAL ──
+  const q = query(inscritosCol, orderBy('ts', 'desc'));
+  onSnapshot(q, (snapshot) => {
+    state.inscritos = snapshot.docs.map(d => ({
+      _id: d.id,
+      ...d.data(),
+      ts: d.data().ts?.toDate ? d.data().ts.toDate() : new Date(d.data().ts)
+    }));
+    // Recalcula contadores
+    state.contadores = {};
+    state.inscritos.forEach(i => {
+      state.contadores[i.cargo] = (state.contadores[i.cargo] || 0) + 1;
+    });
+    renderLista();
+    renderTabela();
+    renderStats();
+    if (document.getElementById('adminPanel').classList.contains('open')) renderAdminPanel();
+  });
+
+  // ── SALVAR INSCRIÇÃO NO FIRESTORE ──
+  window.salvarInscricaoFirestore = async function(inscricao) {
+    try {
+      await addDoc(inscritosCol, {
+        nome: inscricao.nome,
+        cargo: inscricao.cargo,
+        nivel: inscricao.nivel,
+        ts: new Date(),
+        nota: null,
+        notaEdicoes: 0
+      });
+    } catch(e) {
+      console.error('Erro ao salvar:', e);
+      showToast('⚠️ Erro ao salvar inscrição.');
+    }
+  };
+
+  // ── EXCLUIR DO FIRESTORE ──
+  window.excluirInscricaoFirestore = async function(id) {
+    try { await deleteDoc(doc(db, 'inscritos', id)); } catch(e) { console.error(e); }
+  };
+
+  // ── ATUALIZAR NOTA NO FIRESTORE ──
+  window.atualizarNotaFirestore = async function(id, nota, notaEdicoes) {
+    try { await updateDoc(doc(db, 'inscritos', id), { nota, notaEdicoes }); } catch(e) { console.error(e); }
+  };
+
+  // ── LIMPAR TUDO NO FIRESTORE ──
+  window.limparTudoFirestore = async function() {
+    const snap = await getDocs(inscritosCol);
+    await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+  };
 </script>
 
 <script>
