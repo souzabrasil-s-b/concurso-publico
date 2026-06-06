@@ -680,6 +680,7 @@
     <button class="admin-tab admin-tab-ativo" id="tabCandidatos" onclick="mudarAbaAdmin('candidatos')">👥 Candidatos</button>
     <button class="admin-tab" id="tabCargos" onclick="mudarAbaAdmin('cargos')">📋 Gerenciar Cargos</button>
     <button class="admin-tab" id="tabTema" onclick="mudarAbaAdmin('tema')">🎨 Tema</button>
+    <button class="admin-tab" id="tabAnalytics" onclick="mudarAbaAdmin('analytics')">📊 Acessos</button>
   </div>
 
   <!-- ABA CANDIDATOS -->
@@ -709,6 +710,14 @@
   <!-- ABA TEMA -->
   <div id="abaAdminTema" style="display:none;">
     <div id="adminTemaConteudo"></div>
+    <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+      <button class="admin-close-btn" onclick="fecharAdmin()">✕ Fechar painel</button>
+    </div>
+  </div>
+
+  <!-- ABA ANALYTICS -->
+  <div id="abaAdminAnalytics" style="display:none;">
+    <div id="adminAnalyticsConteudo"></div>
     <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
       <button class="admin-close-btn" onclick="fecharAdmin()">✕ Fechar painel</button>
     </div>
@@ -757,13 +766,15 @@
     <div class="form-group">
       <label>Nome completo</label>
       <input type="text" id="nome" placeholder="Ex.: Maria Souza da Silva" maxlength="80" autocomplete="off">
+      <div id="nome-erro" style="font-size:11px;color:#FF3B30;margin-top:4px;min-height:16px;"></div>
     </div>
 
     <div class="form-group">
       <label>Cargo pretendido</label>
       <div class="select-wrap">
-        <select id="cargo" onchange="mostrarInfoCargo()"></select>
+        <select id="cargo" onchange="mostrarInfoCargo(); atualizarBtnInscrever();"></select>
       </div>
+      <div id="cargo-erro" style="font-size:11px;color:#FF3B30;margin-top:4px;min-height:16px;"></div>
       <div id="cargo-info">
         <div class="ci-row">
           <div>
@@ -773,7 +784,7 @@
       </div>
     </div>
 
-    <button class="btn-inscrever" onclick="inscrever()">
+    <button class="btn-inscrever" id="btnInscrever" onclick="inscrever()" disabled style="opacity:0.45;cursor:not-allowed;">
       ✅ Confirmar Inscrição
     </button>
   </div>
@@ -936,14 +947,28 @@
   let abaAdmin = 'candidatos';
   function mudarAbaAdmin(aba) {
     abaAdmin = aba;
-    document.getElementById('abaAdminCandidatos').style.display = aba === 'candidatos' ? 'block' : 'none';
-    document.getElementById('abaAdminCargos').style.display     = aba === 'cargos'     ? 'block' : 'none';
-    document.getElementById('abaAdminTema').style.display       = aba === 'tema'        ? 'block' : 'none';
-    document.getElementById('tabCandidatos').className = 'admin-tab' + (aba === 'candidatos' ? ' admin-tab-ativo' : '');
-    document.getElementById('tabCargos').className     = 'admin-tab' + (aba === 'cargos'     ? ' admin-tab-ativo' : '');
-    document.getElementById('tabTema').className       = 'admin-tab' + (aba === 'tema'        ? ' admin-tab-ativo' : '');
-    if (aba === 'cargos') renderAdminCargos();
-    if (aba === 'tema')   renderAdminTema();
+    document.getElementById('abaAdminCandidatos').style.display  = aba === 'candidatos' ? 'block' : 'none';
+    document.getElementById('abaAdminCargos').style.display      = aba === 'cargos'     ? 'block' : 'none';
+    document.getElementById('abaAdminTema').style.display        = aba === 'tema'       ? 'block' : 'none';
+    document.getElementById('abaAdminAnalytics').style.display   = aba === 'analytics'  ? 'block' : 'none';
+    document.getElementById('tabCandidatos').className  = 'admin-tab' + (aba === 'candidatos' ? ' admin-tab-ativo' : '');
+    document.getElementById('tabCargos').className      = 'admin-tab' + (aba === 'cargos'     ? ' admin-tab-ativo' : '');
+    document.getElementById('tabTema').className        = 'admin-tab' + (aba === 'tema'       ? ' admin-tab-ativo' : '');
+    document.getElementById('tabAnalytics').className   = 'admin-tab' + (aba === 'analytics'  ? ' admin-tab-ativo' : '');
+    if (aba === 'cargos')    renderAdminCargos();
+    if (aba === 'tema')      renderAdminTema();
+    if (aba === 'analytics') {
+      // Mostra loading imediato enquanto o Firebase carrega
+      const el = document.getElementById('adminAnalyticsConteudo');
+      if (el && !el.innerHTML.trim()) {
+        el.innerHTML = `
+          <div style="text-align:center;padding:32px 0;color:rgba(255,255,255,0.4);font-size:13px;">
+            <div style="font-size:28px;margin-bottom:10px;">📡</div>
+            Carregando dados de acesso…
+          </div>`;
+      }
+      if (window.renderAnalytics) window.renderAnalytics();
+    }
   }
 
   // ── TEMA ──
@@ -1167,6 +1192,21 @@
   // inicializar selects
   renderSelectCargos();
 
+  // ── HABILITAR BOTÃO DE INSCRIÇÃO ──
+  function atualizarBtnInscrever() {
+    const nome  = (document.getElementById('nome').value  || '').trim();
+    const cargo = (document.getElementById('cargo').value || '').trim();
+    const nomeValido  = nome.split(/\s+/).filter(p => p.length > 0).length >= 2;
+    const cargoValido = cargo !== '';
+    const btn = document.getElementById('btnInscrever');
+    const ok  = nomeValido && cargoValido;
+    btn.disabled = !ok;
+    btn.style.opacity = ok ? '1' : '0.45';
+    btn.style.cursor  = ok ? 'pointer' : 'not-allowed';
+  }
+
+  document.getElementById('nome').addEventListener('input', atualizarBtnInscrever);
+
   // ── INFO CARGO ──
   function mostrarInfoCargo() {
     const sel = document.getElementById('cargo');
@@ -1179,12 +1219,22 @@
 
   // ── INSCREVER ──
   function inscrever() {
-    const nomeEl = document.getElementById('nome');
+    const nomeEl  = document.getElementById('nome');
+    const emailEl = document.getElementById('email');
     const cargoEl = document.getElementById('cargo');
+    const nomeErro  = document.getElementById('nome-erro');
+    const cargoErro = document.getElementById('cargo-erro');
+    nomeErro.textContent  = '';
+    cargoErro.textContent = '';
 
-    const nome = nomeEl.value.trim();
-    if (!nome) { nomeEl.focus(); shake(nomeEl); return; }
-    if (!cargoEl.value) { shake(cargoEl); return; }
+    const nome  = nomeEl.value.trim();
+
+    // Validar nome completo (mínimo 2 palavras)
+    const palavras = nome.split(/\s+/).filter(p => p.length > 0);
+    if (!nome) { nomeErro.textContent = 'Informe seu nome completo.'; shake(nomeEl); return; }
+    if (palavras.length < 2) { nomeErro.textContent = 'Digite nome e sobrenome.'; shake(nomeEl); return; }
+
+    if (!cargoEl.value) { document.getElementById('cargo-erro').textContent = 'Selecione um cargo.'; shake(cargoEl); return; }
 
     const parts = cargoEl.value.split('|');
     const cargo = parts[0];
@@ -1194,8 +1244,8 @@
     nomeEl.value = '';
     cargoEl.value = '';
     document.getElementById('cargo-info').style.display = 'none';
+    atualizarBtnInscrever();
     showToast('✅ Inscrição de ' + nome + ' registrada!');
-    // Salva no Firestore — onSnapshot atualiza a tela para todos
     if (window.salvarInscricaoFirestore) {
       window.salvarInscricaoFirestore({ nome, cargo, nivel });
     } else {
@@ -1714,6 +1764,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getDatabase, ref, set, onValue, onDisconnect, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAM7s5iHTWWtL3xF6CLKHvmfYp2nZREp1s",
@@ -1780,6 +1831,92 @@
   window.limparTudoFirestore = async function() {
     const snap = await getDocs(inscritosCol);
     await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+  };
+
+  // ── ANALYTICS: PRESENÇA E ACESSOS ──
+  const rtdb = getDatabase(app);
+
+  // Gera ou recupera ID de sessão
+  const sessionId = Math.random().toString(36).slice(2);
+  const presenceRef = ref(rtdb, 'online/' + sessionId);
+  const connRef = ref(rtdb, '.info/connected');
+
+  // Registra presença online
+  onValue(connRef, (snap) => {
+    if (snap.val()) {
+      set(presenceRef, { ts: Date.now(), ua: navigator.userAgent.slice(0,80) });
+      onDisconnect(presenceRef).remove();
+    }
+  });
+
+  // Registra acesso no log
+  const logRef = ref(rtdb, 'acessos');
+  push(logRef, { ts: Date.now() });
+
+  // Escuta online em tempo real
+  const onlineRef = ref(rtdb, 'online');
+  onValue(onlineRef, (snap) => {
+    const data = snap.val() || {};
+    window._onlineCount = Object.keys(data).length;
+    if (window.renderAnalytics) window.renderAnalytics();
+  });
+
+  // Dispara renderAnalytics assim que for definida (aba pode já estar ativa)
+  setTimeout(() => { if (window.renderAnalytics) window.renderAnalytics(); }, 0);
+
+  // Escuta log de acessos
+  onValue(ref(rtdb, 'acessos'), (snap) => {
+    const data = snap.val() || {};
+    const entries = Object.values(data);
+    const now = Date.now();
+    const dia  = entries.filter(e => now - e.ts < 86400000).length;
+    const sem  = entries.filter(e => now - e.ts < 604800000).length;
+    const mes  = entries.filter(e => now - e.ts < 2592000000).length;
+    window._acessosDia  = dia;
+    window._acessosSem  = sem;
+    window._acessosMes  = mes;
+    if (window.renderAnalytics) window.renderAnalytics();
+  });
+
+  // Garante valores padrão antes do primeiro onValue
+  if (window._onlineCount === undefined) window._onlineCount = 0;
+  if (window._acessosDia   === undefined) window._acessosDia  = 0;
+  if (window._acessosSem   === undefined) window._acessosSem  = 0;
+  if (window._acessosMes   === undefined) window._acessosMes  = 0;
+
+  window.renderAnalytics = function() {
+    const el = document.getElementById('adminAnalyticsConteudo');
+    if (!el) return;
+    const online = window._onlineCount || 0;
+    const dia    = window._acessosDia  || 0;
+    const sem    = window._acessosSem  || 0;
+    const mes    = window._acessosMes  || 0;
+    el.innerHTML = \`
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">🟢 Online agora</div>
+        <div style="background:rgba(52,199,89,0.12);border:1px solid rgba(52,199,89,0.25);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:12px;">
+          <span style="font-size:36px;font-weight:700;color:#34C759;letter-spacing:-1px;">\${online}</span>
+          <span style="font-size:13px;color:rgba(255,255,255,0.5);">usuário\${online !== 1 ? 's' : ''} com a página aberta agora</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">📈 Histórico de acessos</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+          <div style="background:rgba(0,122,255,0.1);border:1px solid rgba(0,122,255,0.2);border-radius:12px;padding:14px;text-align:center;">
+            <div style="font-size:28px;font-weight:700;color:#60aaff;letter-spacing:-1px;">\${dia}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;">Hoje</div>
+          </div>
+          <div style="background:rgba(255,159,10,0.1);border:1px solid rgba(255,159,10,0.2);border-radius:12px;padding:14px;text-align:center;">
+            <div style="font-size:28px;font-weight:700;color:#ffbe45;letter-spacing:-1px;">\${sem}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;">7 dias</div>
+          </div>
+          <div style="background:rgba(52,199,89,0.1);border:1px solid rgba(52,199,89,0.2);border-radius:12px;padding:14px;text-align:center;">
+            <div style="font-size:28px;font-weight:700;color:#34C759;letter-spacing:-1px;">\${mes}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;">30 dias</div>
+          </div>
+        </div>
+      </div>
+    \`;
   };
 </script>
 
