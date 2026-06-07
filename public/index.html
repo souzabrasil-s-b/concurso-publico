@@ -871,7 +871,7 @@
         <div class="sl">Cargos c/ inscritos</div>
       </div>
       <div class="stat-box stat-box-top3">
-        <div class="sl" style="margin-bottom:8px;">🏆 Top 3 mais disputados</div>
+        <div class="sl" style="margin-bottom:8px;">🏆 Top 10 mais disputados</div>
         <div id="cargo-lider">
           <div class="top3-empty">—</div>
         </div>
@@ -1494,9 +1494,9 @@
     if (entries.length === 0) {
       liderEl.innerHTML = '<div class="top3-empty">—</div>';
     } else {
-      const medals = ['gold','silver','bronze'];
-      const nums = ['1º','2º','3º'];
-      liderEl.innerHTML = entries.slice(0,3).map(([cargo, count], i) => `
+      const medals = ['gold','silver','bronze','','','','','','',''];
+      const nums = ['1º','2º','3º','4º','5º','6º','7º','8º','9º','10º'];
+      liderEl.innerHTML = entries.slice(0,10).map(([cargo, count], i) => `
         <div class="top3-item">
           <span class="top3-pos ${medals[i]}">${nums[i]}</span>
           <span class="top3-nome">${esc(cargo.split(' – ')[0])}</span>
