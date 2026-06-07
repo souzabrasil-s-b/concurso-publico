@@ -397,10 +397,10 @@
   .container {
     max-width: 860px; margin: 0 auto;
     padding: 20px 24px;
-    width: 100%;
     display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
     width: 100%; box-sizing: border-box;
   }
+  .container > * { min-width: 0; overflow: hidden; }
   @media (max-width: 760px) {
     .container { grid-template-columns: 1fr; padding: 14px 12px; gap: 12px; width: 100%; }
     .header-inner { padding: 10px 16px; }
@@ -528,7 +528,8 @@
   .top3-empty { font-size: 22px; color: var(--cinza-3); text-align: center; padding: 6px 0; }
 
   /* ── TABELA ── */
-  .table-wrap { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--cinza-2); }
+  .table-wrap { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--cinza-2); max-width: 100%; }
+  table { width: 100%; table-layout: fixed; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   thead th {
     background: var(--cinza-bg); color: var(--texto-3);
@@ -552,7 +553,7 @@
   .nivel-medio       { background: rgba(255,159,10,0.08); color: #B36200; border: 1px solid rgba(255,159,10,0.2); }
   .nivel-fundamental { background: rgba(255,59,48,0.07); color: #CC2E25; border: 1px solid rgba(255,59,48,0.15); }
 
-  .bar-cell { min-width: 130px; }
+  .bar-cell { }
   .bar-wrap { display: flex; align-items: center; gap: 8px; }
   .bar-bg   { flex: 1; height: 6px; background: var(--cinza-2); border-radius: 20px; overflow: hidden; }
   .bar-fill { height: 100%; border-radius: 20px; background: var(--verde); transition: width 0.5s ease; min-width: 2px; }
@@ -882,7 +883,7 @@
           <tr>
             <th>Cargo</th>
             <th>Nível</th>
-            <th style="text-align:center; min-width:160px">Inscritos</th>
+            <th style="text-align:center;">Inscritos</th>
           </tr>
         </thead>
         <tbody id="tabela-body">
@@ -1429,7 +1430,7 @@
         </div>`;
       }
       return `
-        <div class="inscrito-item" style="flex-wrap:wrap;">
+        <div class="inscrito-item" style="flex-wrap:wrap;min-width:0;">
           <div class="inscrito-avatar">${ini}</div>
           <div style="flex:1;min-width:120px;">
             <div class="inscrito-nome">${esc(i.nome)}</div>
