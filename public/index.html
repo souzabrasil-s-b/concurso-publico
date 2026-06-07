@@ -47,7 +47,8 @@
 
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
-  html { -webkit-text-size-adjust: 100%; overflow-x: hidden; }
+  html, body { overflow-x: hidden; max-width: 100%; }
+  html { -webkit-text-size-adjust: 100%; }
   *, *::before, *::after { box-sizing: border-box; }
 
   body {
@@ -216,6 +217,13 @@
     border-bottom: 0.5px solid rgba(255,255,255,0.08);
     padding: 20px 24px;
     color: #fff;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .admin-panel-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    width: 100%;
   }
   .admin-panel.open { display: block; }
   .admin-panel-title {
@@ -727,6 +735,7 @@
 
 <!-- PAINEL ADMIN -->
 <div class="admin-panel" id="adminPanel">
+  <div class="admin-panel-inner">
   <div class="admin-panel-title">🛡️ Painel do Administrador</div>
 
   <!-- ABAS -->
@@ -776,6 +785,7 @@
       <button class="admin-close-btn" onclick="fecharAdmin()">✕ Fechar painel</button>
     </div>
   </div>
+  </div><!-- /admin-panel-inner -->
 </div>
 
 <!-- MODAL ADICIONAR/EDITAR CARGO -->
