@@ -47,8 +47,10 @@
 
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
-  html, body { overflow-x: hidden; max-width: 100%; }
-  html { -webkit-text-size-adjust: 100%; }
+  html {
+    -webkit-text-size-adjust: 100%;
+    overflow-x: hidden;
+  }
   *, *::before, *::after { box-sizing: border-box; }
 
   body {
@@ -63,7 +65,8 @@
     min-height: 100vh;
     color: var(--texto);
     overflow-x: hidden;
-    width: 100%;
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
   }
 
   /* ── HEADER ── */
