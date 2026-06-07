@@ -284,15 +284,16 @@
 
   /* ── ABAS ADMIN ── */
   .admin-tabs {
-    display: flex; gap: 6px; margin-bottom: 16px;
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px;
     border-bottom: 1px solid rgba(255,255,255,0.08);
     padding-bottom: 10px;
   }
   .admin-tab {
     background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
     color: rgba(255,255,255,0.5); border-radius: var(--radius-xs);
-    padding: 7px 14px; font-size: 12px; font-weight: 600;
+    padding: 7px 10px; font-size: 11px; font-weight: 600;
     cursor: pointer; font-family: var(--sf); transition: all 0.15s;
+    white-space: nowrap; flex-shrink: 0;
   }
   .admin-tab:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
   .admin-tab-ativo {
