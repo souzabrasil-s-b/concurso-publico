@@ -626,6 +626,45 @@
   .btn-limpar:hover { border-color: var(--vermelho); color: var(--vermelho); }
 
   .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+
+/* RODAPÉ ALFA STORE */
+.alfa-footer {
+  width: 100%;
+  padding: 40px 24px 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: transparent;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  margin-top: 40px;
+}
+.alfa-footer-dev {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px;
+  font-weight: 300;
+  letter-spacing: 0.5px;
+  color: rgba(160,185,210,0.45);
+  text-align: center;
+}
+.alfa-footer-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+.alfa-footer-link:hover { opacity: 0.8; }
+.alfa-footer-wpp-icon { width: 26px; height: 26px; flex-shrink: 0; }
+.alfa-footer-suporte {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  color: rgba(160,210,185,0.55);
+}
+
 </style>
 </head>
 <body>
@@ -1953,5 +1992,19 @@
     });
   }
 </script>
+
+<!-- RODAPÉ ALFA STORE -->
+<footer class="alfa-footer">
+  <div class="alfa-footer-dev">Desenvolvido por Alfa Store — Soluções e Tecnologia</div>
+  <a class="alfa-footer-link" href="https://wa.me/5592994810508" target="_blank" rel="noopener noreferrer">
+    <svg class="alfa-footer-wpp-icon" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="16" cy="16" r="15" fill="none" stroke="rgba(160,210,185,0.45)" stroke-width="1.5"/>
+      <path d="M22.5 9.4A9.1 9.1 0 0 0 7.1 20.5L6 26l5.6-1.1a9.1 9.1 0 0 0 10.9-15.5z" fill="rgba(160,210,185,0.45)"/>
+      <path d="M13.1 12.1c-.3-.6-.6-.6-.9-.6h-.7c-.2 0-.6.1-.9.5s-1.2 1.2-1.2 2.9 1.3 3.4 1.4 3.6 2.4 3.8 5.9 5.2c.8.3 1.4.5 1.9.6.8.3 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.5.3-.7.3-1.4.2-1.5s-.2-.2-.5-.3-1.6-.8-1.9-.9-.4-.1-.6.1l-.9 1.1c-.1.2-.3.2-.5.1-.7-.3-1.4-.6-2-1.1-.5-.5-1-1-1.4-1.6-.1-.2 0-.4.1-.5l.6-.7c.1-.2.2-.4.3-.6s0-.4-.1-.5l-.9-2.4z" fill="rgba(240,255,248,0.7)"/>
+    </svg>
+    <span class="alfa-footer-suporte">Suporte — (92) 99481-0508</span>
+  </a>
+</footer>
+
 </body>
 </html>
