@@ -1301,7 +1301,7 @@
   }
 
   // ── INSCREVER ──
-  function inscrever() {
+  async function inscrever() {
     const nomeEl  = document.getElementById('nome');
     const emailEl = document.getElementById('email');
     const cargoEl = document.getElementById('cargo');
@@ -1323,19 +1323,32 @@
     const cargo = parts[0];
     const nivel = parts[3];
 
-    // Reset form
-    nomeEl.value = '';
-    cargoEl.value = '';
-    document.getElementById('cargo-info').style.display = 'none';
-    atualizarBtnInscrever();
-    showToast('✅ Inscrição de ' + nome + ' registrada!');
+    // Desabilita botão durante o salvamento
+    const btnInscrever = document.querySelector('button[onclick="inscrever()"]');
+    if (btnInscrever) { btnInscrever.disabled = true; btnInscrever.textContent = '⏳ Salvando...'; }
+
     if (window.salvarInscricaoFirestore) {
-      window.salvarInscricaoFirestore({ nome, cargo, nivel });
+      const ok = await window.salvarInscricaoFirestore({ nome, cargo, nivel });
+      if (ok) {
+        // Reset form apenas após confirmação
+        nomeEl.value = '';
+        cargoEl.value = '';
+        document.getElementById('cargo-info').style.display = 'none';
+        atualizarBtnInscrever();
+        showToast('✅ Inscrição de ' + nome + ' registrada!');
+      }
     } else {
       state.inscritos.unshift({ nome, cargo, nivel, ts: new Date(), nota: null, notaEdicoes: 0 });
       state.contadores[cargo] = (state.contadores[cargo] || 0) + 1;
+      nomeEl.value = '';
+      cargoEl.value = '';
+      document.getElementById('cargo-info').style.display = 'none';
+      atualizarBtnInscrever();
+      showToast('✅ Inscrição de ' + nome + ' registrada!');
       renderLista(); renderTabela(); renderStats(); atualizarSelectCargo();
     }
+
+    if (btnInscrever) { btnInscrever.disabled = false; btnInscrever.textContent = '✅ Confirmar Inscrição'; }
   }
 
   // ── ESTADO FILTRO ──
@@ -2068,9 +2081,15 @@
         nota: null,
         notaEdicoes: 0
       });
+      return true;
     } catch(e) {
       console.error('Erro ao salvar:', e);
-      showToast('⚠️ Erro ao salvar inscrição.');
+      if (e.code === 'permission-denied') {
+        showToast('🔒 Sem permissão — verifique as regras do Firestore.');
+      } else {
+        showToast('⚠️ Erro ao salvar inscrição. Tente novamente.');
+      }
+      return false;
     }
   };
 
