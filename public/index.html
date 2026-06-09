@@ -1476,17 +1476,27 @@
           <span class="edicoes-counter ${restantes === 1 ? 'edicoes-alerta' : 'edicoes-ok'}" title="Você poderá alterar até ${MAX_EDICOES} vezes">✏️ ${restantes}x restante${restantes > 1 ? 's' : ''}</span>
         </div>`;
       }
-      // Badge de colocação por cargo (sempre visível)
+      // Badge de colocação por cargo (sempre visível para todos os candidatos)
       let colocacaoHtml = '';
       if (i.colocacao) {
         const temNotaVal = i.nota !== undefined && i.nota !== null && i.nota !== '';
-        const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
-        const medal = (temNotaVal && medals[i.colocacao]) ? medals[i.colocacao] : '';
-        const colorMap = { 1: '#f5c518', 2: '#9eaebb', 3: '#cd7f32' };
-        const color = temNotaVal ? (colorMap[i.colocacao] || '#6b7f96') : 'rgba(255,255,255,0.45)';
-        const bgMap = { 1: 'rgba(245,197,24,0.13)', 2: 'rgba(158,174,187,0.13)', 3: 'rgba(205,127,50,0.13)' };
-        const bg = temNotaVal ? (bgMap[i.colocacao] || 'rgba(107,127,150,0.10)') : 'rgba(107,127,150,0.12)';
-        colocacaoHtml = `<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:${color};background:${bg};border-radius:6px;padding:1px 7px;margin-left:6px;vertical-align:middle;">${medal} ${i.colocacao}º</span>`;
+        const pos = i.colocacao;
+        let medal = '', color, bg, borderColor;
+        if (temNotaVal) {
+          if (pos === 1) {
+            medal = '🥇'; color = '#f5c518'; bg = 'rgba(245,197,24,0.15)'; borderColor = 'rgba(245,197,24,0.35)';
+          } else if (pos === 2) {
+            medal = '🥈'; color = '#9eaebb'; bg = 'rgba(158,174,187,0.15)'; borderColor = 'rgba(158,174,187,0.35)';
+          } else if (pos === 3) {
+            medal = '🥉'; color = '#cd7f32'; bg = 'rgba(205,127,50,0.15)'; borderColor = 'rgba(205,127,50,0.35)';
+          } else {
+            medal = ''; color = '#7ab3d4'; bg = 'rgba(122,179,212,0.12)'; borderColor = 'rgba(122,179,212,0.25)';
+          }
+        } else {
+          color = 'rgba(255,255,255,0.45)'; bg = 'rgba(107,127,150,0.12)'; borderColor = 'rgba(107,127,150,0.20)';
+        }
+        const medalSpan = medal ? `${medal} ` : '';
+        colocacaoHtml = `<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:${color};background:${bg};border:1px solid ${borderColor};border-radius:6px;padding:1px 7px;margin-left:6px;vertical-align:middle;">${medalSpan}${pos}º</span>`;
       }
 
       return `
