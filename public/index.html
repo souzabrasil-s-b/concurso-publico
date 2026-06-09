@@ -1442,22 +1442,20 @@
       return;
     }
 
-    // ── Ordenação por nota quando liberadas ──
-    // Calcula colocação POR CARGO: para cada cargo, rankeia por nota desc
+    // Calcula colocação POR CARGO usando _id como chave (compatível com Firebase)
     const rankingPorCargo = {};
-    if (state.notasLiberadas) {
-      // agrupa todos os inscritos por cargo
-      const grupos = {};
-      state.inscritos.forEach((ins, idx) => {
-        if (!grupos[ins.cargo]) grupos[ins.cargo] = [];
-        grupos[ins.cargo].push({ ...ins, idx });
-      });
-      // ordena cada grupo por nota desc e atribui posição
-      Object.keys(grupos).forEach(cargo => {
-        const comNota = grupos[cargo].filter(x => x.nota !== undefined && x.nota !== null && x.nota !== '').sort((a, b) => parseFloat(b.nota) - parseFloat(a.nota));
-        comNota.forEach((x, pos) => { rankingPorCargo[x.idx] = pos + 1; });
-      });
-    }
+    const gruposRanking = {};
+    state.inscritos.forEach((ins, idx) => {
+      const chave = ins._id || String(idx);
+      if (!gruposRanking[ins.cargo]) gruposRanking[ins.cargo] = [];
+      gruposRanking[ins.cargo].push({ ...ins, _chave: chave });
+    });
+    Object.keys(gruposRanking).forEach(cargo => {
+      const comNota = gruposRanking[cargo]
+        .filter(x => x.nota !== undefined && x.nota !== null && x.nota !== '')
+        .sort((a, b) => parseFloat(b.nota) - parseFloat(a.nota));
+      comNota.forEach((x, pos) => { rankingPorCargo[x._chave] = pos + 1; });
+    });
 
     // Ordena SEMPRE por cargo (agrupado) e dentro de cada cargo do maior para menor nota
     let ordenados = [...filtrados];
@@ -1479,10 +1477,23 @@
       const MAX_EDICOES = 3;
       const limiteAtingido = edicoes >= MAX_EDICOES;
       const temNota = i.nota !== undefined && i.nota !== null && i.nota !== '';
-      const colocacao = rankingPorCargo[idx];
+      const _chaveRanking = i._id || String(idx);
+      const colocacao = rankingPorCargo[_chaveRanking];
       let notaHtml;
 
-      if (!state.notasLiberadas) {
+      // Calcula medalha e colocação (usado em vários blocos abaixo)
+      const medalha = colocacao === 1 ? '🥇' : colocacao === 2 ? '🥈' : colocacao === 3 ? '🥉' : colocacao ? '🏅' : '';
+      const colocacaoHtml = colocacao
+        ? `<span style="font-size:11px;font-weight:700;color:${colocacao<=3?'#b8860b':'#444'};background:${colocacao<=3?'#fff8e1':'#f0f0f0'};border-radius:6px;padding:2px 8px;border:1px solid ${colocacao<=3?'#f0d060':'#ddd'};">${medalha} ${colocacao}º lugar no cargo</span>`
+        : '';
+
+      if (!state.notasLiberadas && temNota) {
+        // Notas bloqueadas mas candidato já tem nota (lançada pelo admin) — mostra colocação
+        notaHtml = `<div class="nota-wrap" style="flex-wrap:wrap;gap:6px;">
+          <span class="nota-bloqueada-msg">🔒 Nota bloqueada pelo administrador</span>
+          ${colocacaoHtml}
+        </div>`;
+      } else if (!state.notasLiberadas) {
         notaHtml = `<div class="nota-wrap">
           <span class="nota-bloqueada-msg">🔒 Nota bloqueada pelo administrador</span>
         </div>`;
@@ -1493,10 +1504,6 @@
         const contadorHtml = podeEditar
           ? `<span class="edicoes-counter ${contadorClass}" title="Alterações restantes">✏️ ${restantes}x restante${restantes > 1 ? 's' : ''}</span>`
           : `<span class="edicoes-counter edicoes-esgotadas" title="Limite atingido — somente o administrador pode alterar">🔐 Bloqueado</span>`;
-        const medalha = colocacao === 1 ? '🥇' : colocacao === 2 ? '🥈' : colocacao === 3 ? '🥉' : '';
-        const colocacaoHtml = colocacao
-          ? `<span style="font-size:11px;font-weight:700;color:${colocacao<=3?'#c47b00':'#555'};background:${colocacao<=3?'#fff8e1':'#f0f0f0'};border-radius:6px;padding:2px 7px;margin-left:4px;">${medalha} ${colocacao}º lugar no cargo</span>`
-          : '';
         notaHtml = `<div class="nota-wrap" style="flex-wrap:wrap;gap:6px;">
           <span style="font-size:11px;color:#6b7f96;font-weight:600;">📊 NOTA:</span>
           <span class="nota-badge">🎯 ${i.nota}</span>
