@@ -2058,7 +2058,19 @@
 
   // ── ESCUTA EM TEMPO REAL ──
   const q = query(inscritosCol, orderBy('ts', 'desc'));
+  // Timeout: se Firebase não responder em 4s, usa localStorage
+  let firebaseOk = false;
+  const fbTimeout = setTimeout(() => {
+    if (!firebaseOk) {
+      console.warn('Firebase indisponível — usando dados locais.');
+      // já carregados pelo carregarState(), apenas re-renderiza
+      renderLista(); renderTabela(); renderStats(); atualizarSelectCargo();
+    }
+  }, 4000);
+
   onSnapshot(q, (snapshot) => {
+    firebaseOk = true;
+    clearTimeout(fbTimeout);
     state.inscritos = snapshot.docs.map(d => ({
       _id: d.id,
       ...d.data(),
@@ -2069,9 +2081,12 @@
     state.inscritos.forEach(i => {
       state.contadores[i.cargo] = (state.contadores[i.cargo] || 0) + 1;
     });
+    // Sincroniza localStorage com dados do Firebase
+    salvarState();
     renderLista();
     renderTabela();
     renderStats();
+    atualizarSelectCargo();
     if (document.getElementById('adminPanel').classList.contains('open')) {
       renderAdminPanel();
       if (document.getElementById('abaAdminRanking').style.display !== 'none') renderAdminRanking();
@@ -2089,9 +2104,13 @@
         nota: null,
         notaEdicoes: 0
       });
+      // onSnapshot cuida de atualizar o state e salvarState
     } catch(e) {
-      console.error('Erro ao salvar:', e);
-      showToast('⚠️ Erro ao salvar inscrição.');
+      console.error('Firebase indisponível — salvando localmente:', e);
+      // Fallback: salva direto no state + localStorage
+      state.inscritos.unshift({ nome: inscricao.nome, cargo: inscricao.cargo, nivel: inscricao.nivel, ts: new Date(), nota: null, notaEdicoes: 0 });
+      state.contadores[inscricao.cargo] = (state.contadores[inscricao.cargo] || 0) + 1;
+      renderLista(); renderTabela(); renderStats(); atualizarSelectCargo(); salvarState();
     }
   };
 
@@ -2102,7 +2121,14 @@
 
   // ── ATUALIZAR NOTA NO FIRESTORE ──
   window.atualizarNotaFirestore = async function(id, nota, notaEdicoes) {
-    try { await updateDoc(doc(db, 'inscritos', id), { nota, notaEdicoes }); } catch(e) { console.error(e); }
+    try {
+      await updateDoc(doc(db, 'inscritos', id), { nota, notaEdicoes });
+      // onSnapshot sincroniza — mas salva localStorage como backup imediato
+      salvarState();
+    } catch(e) {
+      console.error('Firebase indisponível — nota salva só localmente:', e);
+      salvarState();
+    }
   };
 
   // ── LIMPAR TUDO NO FIRESTORE ──
