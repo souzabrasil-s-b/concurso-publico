@@ -1361,12 +1361,13 @@
   }
 
   function getFiltrados() {
-    const comIdx = state.inscritos.map((i, idx) => ({ ...i, idx }));
+    // Usa _id (Firestore ID) como chave — índice numérico muda a cada onSnapshot
+    const comId = state.inscritos.map(i => ({ ...i }));
 
     // Calcula ranking por cargo (somente quem tem nota, ordenado nota desc)
     const rankingPorCargo = {};
     const porCargo = {};
-    comIdx.forEach(i => {
+    comId.forEach(i => {
       if (!porCargo[i.cargo]) porCargo[i.cargo] = [];
       porCargo[i.cargo].push(i);
     });
@@ -1375,17 +1376,17 @@
         .filter(i => i.nota !== undefined && i.nota !== null && i.nota !== '')
         .sort((a, b) => parseFloat(b.nota) - parseFloat(a.nota));
       comNota.forEach((i, pos) => {
-        rankingPorCargo[i.idx] = pos + 1;
+        rankingPorCargo[i._id] = pos + 1;
       });
     });
 
-    const filtrados = comIdx.filter(i => {
+    const filtrados = comId.filter(i => {
       const matchTexto = !filtroTexto ||
         i.nome.toLowerCase().includes(filtroTexto) ||
         i.cargo.toLowerCase().includes(filtroTexto);
       const matchNivel = !filtroNivel || i.nivel === filtroNivel;
       return matchTexto && matchNivel;
-    }).map(i => ({ ...i, colocacao: rankingPorCargo[i.idx] || null }));
+    }).map(i => ({ ...i, colocacao: rankingPorCargo[i._id] || null }));
 
     // Ordena: por cargo (alfa) → com nota primeiro (nota desc) → sem nota por último
     filtrados.sort((a, b) => {
@@ -1430,7 +1431,7 @@
     }
 
     el.innerHTML = filtrados.map(i => {
-      const idx = i.idx;
+      const id = i._id;  // chave estável — não muda após onSnapshot
       const ini = i.nome.split(' ').map(p => p[0]).slice(0,2).join('').toUpperCase();
       const hora = i.ts.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
       const edicoes = i.notaEdicoes || 0;
@@ -1454,7 +1455,7 @@
           <span style="font-size:11px;color:#6b7f96;font-weight:600;">📊 NOTA:</span>
           <span class="nota-badge">🎯 ${i.nota}</span>
           ${podeEditar
-            ? `<button class="nota-salvar-btn" style="font-size:11px;padding:4px 10px;background:#2a5298;" onclick="editarNota(${idx})">✏️ Alterar</button>`
+            ? `<button class="nota-salvar-btn" style="font-size:11px;padding:4px 10px;background:#2a5298;" onclick="editarNota('${id}')">✏️ Alterar</button>`
             : `<button class="nota-salvar-btn" disabled title="Limite de alterações atingido">🔐 Limite atingido</button>`
           }
           ${contadorHtml}
@@ -1467,8 +1468,8 @@
       } else {
         const restantes = MAX_EDICOES - edicoes;
         notaHtml = `<div class="nota-wrap">
-          <input class="nota-input" type="number" min="0" max="100" step="0.1" placeholder="0–100" id="nota-${idx}">
-          <button class="nota-salvar-btn" onclick="salvarNota(${idx})">✔ Salvar nota</button>
+          <input class="nota-input" type="number" min="0" max="100" step="0.1" placeholder="0–100" id="nota-${id}">
+          <button class="nota-salvar-btn" onclick="salvarNota('${id}')">✔ Salvar nota</button>
           <span class="edicoes-counter ${restantes === 1 ? 'edicoes-alerta' : 'edicoes-ok'}" title="Você poderá alterar até ${MAX_EDICOES} vezes">✏️ ${restantes}x restante${restantes > 1 ? 's' : ''}</span>
         </div>`;
       }
@@ -1666,8 +1667,8 @@
 
   function renderAdminPanel() {
     const conteudo = document.getElementById('adminConteudo');
-    const sorted = [...state.inscritos].map((ins, originalIdx) => ({...ins, originalIdx}))
-                    .sort((a,b) => a.nome.localeCompare(b.nome));
+    // Usa _id (Firestore ID) — originalIdx era volátil após cada onSnapshot
+    const sorted = [...state.inscritos].sort((a,b) => a.nome.localeCompare(b.nome));
 
     let html = `<button class="admin-add-btn" onclick="abrirModalAdd()">➕ Adicionar candidato</button>`;
 
@@ -1679,7 +1680,7 @@
         <div style="overflow-x:auto;">
         <table class="admin-table">
           <thead><tr><th>#</th><th>Nome</th><th>Cargo</th><th>Nota</th><th>Edições</th><th>Ações</th></tr></thead>
-          <tbody>${sorted.map((i, idx) => {
+          <tbody>${sorted.map((i, rowNum) => {
             const edicoes = i.notaEdicoes || 0;
             const limiteAtingido = edicoes >= MAX_EDICOES;
             const temNota = i.nota !== undefined && i.nota !== null && i.nota !== '';
@@ -1691,16 +1692,16 @@
               : `<span style="color:rgba(255,255,255,0.6);font-size:11px;">${edicoes}/${MAX_EDICOES}</span>`;
             return `
             <tr>
-              <td>${idx+1}</td>
+              <td>${rowNum+1}</td>
               <td>${esc(i.nome)}</td>
               <td>${esc(i.cargo.split(' – ')[0])}</td>
               <td>${notaCell}</td>
               <td>${edicoesCell}</td>
               <td style="white-space:nowrap;">
-                <button class="admin-action-btn btn-edit" onclick="abrirModalEdit(${i.originalIdx})" title="Editar cadastro">✏️</button>
-                <button class="admin-action-btn" style="background:rgba(0,168,107,0.2);color:#00d98b;" onclick="adminEditarNota(${i.originalIdx})" title="Alterar nota (admin)">📝</button>
-                <button class="admin-action-btn" style="background:rgba(245,180,0,0.2);color:#f5d060;" onclick="adminResetarNota(${i.originalIdx})" title="Resetar nota e contador">🔄</button>
-                <button class="admin-action-btn btn-del" onclick="excluirCandidato(${i.originalIdx})" title="Excluir candidato">🗑️</button>
+                <button class="admin-action-btn btn-edit" onclick="abrirModalEdit('${i._id}')" title="Editar cadastro">✏️</button>
+                <button class="admin-action-btn" style="background:rgba(0,168,107,0.2);color:#00d98b;" onclick="adminEditarNota('${i._id}')" title="Alterar nota (admin)">📝</button>
+                <button class="admin-action-btn" style="background:rgba(245,180,0,0.2);color:#f5d060;" onclick="adminResetarNota('${i._id}')" title="Resetar nota e contador">🔄</button>
+                <button class="admin-action-btn btn-del" onclick="excluirCandidato('${i._id}')" title="Excluir candidato">🗑️</button>
               </td>
             </tr>`;
           }).join('')}
@@ -1756,14 +1757,16 @@
   }
 
   // ── EXCLUIR ──
-  function excluirCandidato(idx) {
-    if (!confirm(`Excluir "${state.inscritos[idx].nome}"?`)) return;
-    const id = state.inscritos[idx]._id;
-    if (window.excluirInscricaoFirestore && id) {
+  function excluirCandidato(id) {
+    // id = Firestore _id (estável)
+    const ins = state.inscritos.find(i => i._id === id);
+    if (!ins) return;
+    if (!confirm(`Excluir "${ins.nome}"?`)) return;
+    if (window.excluirInscricaoFirestore) {
       window.excluirInscricaoFirestore(id);
     } else {
-      const cargo = state.inscritos[idx].cargo;
-      state.inscritos.splice(idx, 1);
+      const cargo = ins.cargo;
+      state.inscritos = state.inscritos.filter(i => i._id !== id);
       state.contadores[cargo]--;
       if (state.contadores[cargo] <= 0) delete state.contadores[cargo];
       renderLista(); renderTabela(); renderStats();
@@ -1773,10 +1776,12 @@
   }
 
   // ── EDITAR ──
-  let editIdx = null;
-  function abrirModalEdit(idx) {
-    editIdx = idx;
-    const ins = state.inscritos[idx];
+  let editIdx = null; // guarda Firestore _id quando editando, null quando adicionando
+  function abrirModalEdit(id) {
+    // id = Firestore _id (estável)
+    editIdx = id;
+    const ins = state.inscritos.find(i => i._id === id);
+    if (!ins) return;
     document.getElementById('editTitle').textContent = '✏️ Editar Candidato';
     document.getElementById('editNome').value = ins.nome;
     // Seleciona o cargo correto
@@ -1816,16 +1821,18 @@
     const nivel = cargoVal.split('|')[3];
 
     if (editIdx !== null) {
-      // Editar existente
-      const antigoCargo = state.inscritos[editIdx].cargo;
+      // Editar existente — editIdx guarda Firestore _id (estável)
+      const ins = state.inscritos.find(i => i._id === editIdx);
+      if (!ins) return;
+      const antigoCargo = ins.cargo;
       if (antigoCargo !== cargo) {
         state.contadores[antigoCargo]--;
         if (state.contadores[antigoCargo] <= 0) delete state.contadores[antigoCargo];
         state.contadores[cargo] = (state.contadores[cargo] || 0) + 1;
       }
-      state.inscritos[editIdx].nome = nome;
-      state.inscritos[editIdx].cargo = cargo;
-      state.inscritos[editIdx].nivel = nivel;
+      ins.nome = nome;
+      ins.cargo = cargo;
+      ins.nivel = nivel;
       showToast('✅ Candidato atualizado.');
     } else {
       // Adicionar novo
@@ -1861,12 +1868,15 @@
   function toggleNotas() {
     const novoValor = !state.notasLiberadas;
     // Persiste no Firebase Realtime Database — reflete para TODOS os usuários em tempo real
-    set(ref(rtdb, 'config/notasLiberadas'), novoValor);
+    // Usa window.firebaseRef / window.firebaseSet / window.rtdb porque esta função está
+    // fora do escopo do módulo ES onde ref, set e rtdb foram definidos.
+    window.firebaseSet(window.firebaseRef(window.rtdb, 'config/notasLiberadas'), novoValor);
     // state.notasLiberadas será atualizado pelo listener onValue abaixo
   }
 
-  function salvarNota(idx) {
-    const input = document.getElementById('nota-' + idx);
+  function salvarNota(id) {
+    // id = Firestore _id (estável); não usar índice numérico (muda a cada onSnapshot)
+    const input = document.getElementById('nota-' + id);
     if (!input) return;
     const val = parseFloat(input.value);
     if (isNaN(val) || val < 0 || val > 100) {
@@ -1876,7 +1886,8 @@
       return;
     }
     const MAX_EDICOES = 3;
-    const ins = state.inscritos[idx];
+    const ins = state.inscritos.find(i => i._id === id);
+    if (!ins) return;
     const edicoes = ins.notaEdicoes || 0;
     if (edicoes >= MAX_EDICOES) {
       showToast('🔐 Limite de alterações atingido. Contate o administrador.');
@@ -1896,9 +1907,11 @@
     }
   }
 
-  function editarNota(idx) {
+  function editarNota(id) {
+    // id = Firestore _id (estável)
     const MAX_EDICOES = 3;
-    const ins = state.inscritos[idx];
+    const ins = state.inscritos.find(i => i._id === id);
+    if (!ins) return;
     const edicoes = ins.notaEdicoes || 0;
     if (edicoes >= MAX_EDICOES) {
       showToast('🔐 Limite de alterações atingido. Somente o administrador pode alterar.');
@@ -1906,29 +1919,41 @@
     }
     ins.nota = null;
     renderLista();
-    setTimeout(() => { const inp = document.getElementById('nota-' + idx); if(inp) inp.focus(); }, 50);
+    setTimeout(() => { const inp = document.getElementById('nota-' + id); if(inp) inp.focus(); }, 50);
   }
 
   // Admin pode resetar o contador de edições de um candidato
-  function adminResetarNota(idx) {
-    if (!confirm('Resetar nota e contador de edições de "' + state.inscritos[idx].nome + '"?')) return;
-    state.inscritos[idx].nota = null;
-    state.inscritos[idx].notaEdicoes = 0;
+  function adminResetarNota(id) {
+    // id = Firestore _id (estável)
+    const ins = state.inscritos.find(i => i._id === id);
+    if (!ins) return;
+    if (!confirm('Resetar nota e contador de edições de "' + ins.nome + '"?')) return;
+    ins.nota = null;
+    ins.notaEdicoes = 0;
+    if (window.atualizarNotaFirestore) {
+      window.atualizarNotaFirestore(id, null, 0);
+    }
     renderLista();
     renderAdminPanel();
-    showToast('🔄 Nota e contador resetados para ' + state.inscritos[idx].nome + '.');
+    showToast('🔄 Nota e contador resetados para ' + ins.nome + '.');
   }
 
   // Admin pode forçar alteração de nota sem usar o contador do candidato
-  function adminEditarNota(idx) {
-    const novaStr = prompt('Nova nota para ' + state.inscritos[idx].nome + ' (0–100):', state.inscritos[idx].nota || '');
+  function adminEditarNota(id) {
+    // id = Firestore _id (estável)
+    const ins = state.inscritos.find(i => i._id === id);
+    if (!ins) return;
+    const novaStr = prompt('Nova nota para ' + ins.nome + ' (0–100):', ins.nota || '');
     if (novaStr === null) return;
     const val = parseFloat(novaStr.replace(',', '.'));
     if (isNaN(val) || val < 0 || val > 100) {
       showToast('⚠️ Nota inválida.');
       return;
     }
-    state.inscritos[idx].nota = val.toFixed(1);
+    ins.nota = val.toFixed(1);
+    if (window.atualizarNotaFirestore) {
+      window.atualizarNotaFirestore(id, ins.nota, ins.notaEdicoes || 0);
+    }
     renderLista();
     renderAdminPanel();
     showToast('✅ Nota alterada pelo administrador: ' + val.toFixed(1));
@@ -2013,6 +2038,11 @@
 
   // ── ANALYTICS: PRESENÇA E ACESSOS ──
   const rtdb = getDatabase(app);
+
+  // Expõe para funções fora do escopo do módulo ES (ex: toggleNotas via onclick)
+  window.rtdb        = rtdb;
+  window.firebaseRef = ref;
+  window.firebaseSet = set;
 
   // Valores padrão — definidos ANTES dos listeners
   window._onlineCount = 0;
