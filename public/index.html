@@ -1249,7 +1249,7 @@
     fecharModalCargo();
     renderSelectCargos();
     renderAdminCargos();
-    renderLista(); renderTabela(); renderStats(); atualizarSelectCargo();
+    renderLista(); renderTabela(); renderStats(); atualizarSelectCargo(); salvarState();
   }
 
   function excluirCargo(idx) {
@@ -1263,7 +1263,7 @@
     state.cargos.splice(idx, 1);
     renderSelectCargos();
     renderAdminCargos();
-    renderLista(); renderTabela(); renderStats(); atualizarSelectCargo();
+    renderLista(); renderTabela(); renderStats(); atualizarSelectCargo(); salvarState();
     showToast('🗑️ Cargo removido.');
   }
 
@@ -1271,9 +1271,61 @@
   const NIVEL_LABEL = { superior: 'Superior', medio: 'Médio/Técnico', fundamental: 'Fundamental' };
   const NIVEL_CLASS = { superior: 'nivel-superior', medio: 'nivel-medio', fundamental: 'nivel-fundamental' };
 
+  // ── PERSISTÊNCIA LOCAL ──
+  const STORAGE_KEY = 'seduc2026_state';
+
+  function salvarState() {
+    try {
+      const dados = {
+        inscritos: state.inscritos.map(i => ({
+          ...i,
+          ts: i.ts instanceof Date ? i.ts.toISOString() : i.ts
+        })),
+        contadores: state.contadores,
+        notasLiberadas: state.notasLiberadas,
+        cargos: state.cargos
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dados));
+    } catch(e) { console.warn('Erro ao salvar state:', e); }
+  }
+
+  function carregarState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const dados = JSON.parse(raw);
+      if (dados.inscritos) {
+        state.inscritos = dados.inscritos.map(i => ({ ...i, ts: new Date(i.ts) }));
+      }
+      if (dados.contadores) state.contadores = dados.contadores;
+      if (typeof dados.notasLiberadas === 'boolean') state.notasLiberadas = dados.notasLiberadas;
+      if (dados.cargos && dados.cargos.length > 0) state.cargos = dados.cargos;
+    } catch(e) { console.warn('Erro ao carregar state:', e); }
+  }
+
+  // Carrega dados salvos antes de renderizar
+  carregarState();
+
+  // Sincroniza botão de notas com estado carregado
+  (function() {
+    const btn = document.getElementById('toggleNotaBtn');
+    const desc = document.getElementById('toggleNotaDesc');
+    if (!btn) return;
+    if (state.notasLiberadas) {
+      btn.textContent = '\u{1F513} Liberado';
+      btn.className = 'toggle-btn unlocked';
+      if (desc) desc.textContent = 'Notas liberadas — candidatos podem inserir suas notas.';
+    } else {
+      btn.textContent = '\u{1F512} Bloqueado';
+      btn.className = 'toggle-btn locked';
+      if (desc) desc.textContent = 'Notas bloqueadas — candidatos não podem inserir.';
+    }
+  })();
+
   // inicializar selects
   renderSelectCargos();
   atualizarSelectCargo();
+  renderLista(); renderTabela(); renderStats();
 
   // ── HABILITAR BOTÃO DE INSCRIÇÃO ──
   function atualizarBtnInscrever() {
@@ -1334,7 +1386,7 @@
     } else {
       state.inscritos.unshift({ nome, cargo, nivel, ts: new Date(), nota: null, notaEdicoes: 0 });
       state.contadores[cargo] = (state.contadores[cargo] || 0) + 1;
-      renderLista(); renderTabela(); renderStats(); atualizarSelectCargo();
+      renderLista(); renderTabela(); renderStats(); atualizarSelectCargo(); salvarState();
     }
   }
 
@@ -1629,7 +1681,7 @@
     state.inscritos = [];
     state.contadores = {};
     limparFiltro();
-    renderLista(); renderTabela(); renderStats(); atualizarSelectCargo();
+    renderLista(); renderTabela(); renderStats(); atualizarSelectCargo(); salvarState();
     showToast('🗑️ Todas as inscrições foram removidas.');
   }
 
@@ -1803,7 +1855,7 @@
       state.inscritos.splice(idx, 1);
       state.contadores[cargo]--;
       if (state.contadores[cargo] <= 0) delete state.contadores[cargo];
-      renderLista(); renderTabela(); renderStats(); atualizarSelectCargo();
+      renderLista(); renderTabela(); renderStats(); atualizarSelectCargo(); salvarState();
       renderAdminPanel();
     }
     showToast('🗑️ Candidato removido.');
@@ -1872,7 +1924,7 @@
     }
 
     fecharModalEdit();
-    renderLista(); renderTabela(); renderStats(); atualizarSelectCargo();
+    renderLista(); renderTabela(); renderStats(); atualizarSelectCargo(); salvarState();
     renderAdminPanel();
   }
 
@@ -1888,7 +1940,7 @@
     } else {
       state.inscritos = [];
       state.contadores = {};
-      renderLista(); renderTabela(); renderStats(); atualizarSelectCargo();
+      renderLista(); renderTabela(); renderStats(); atualizarSelectCargo(); salvarState();
       renderAdminPanel();
     }
     showToast('🗑️ Todas as inscrições foram removidas.');
@@ -1910,7 +1962,7 @@
       if (desc) desc.textContent = 'Notas bloqueadas — candidatos não podem inserir.';
       showToast('🔒 Lançamento de notas BLOQUEADO.');
     }
-    renderLista();
+    renderLista(); salvarState();
   }
 
   function salvarNota(idx) {
@@ -1935,7 +1987,7 @@
     if (window.atualizarNotaFirestore && ins._id) {
       window.atualizarNotaFirestore(ins._id, ins.nota, ins.notaEdicoes);
     }
-    renderLista();
+    renderLista(); salvarState();
     const restantes = MAX_EDICOES - ins.notaEdicoes;
     if (restantes === 0) {
       showToast('✅ Nota salva: ' + val.toFixed(1) + ' — Limite de alterações atingido!');
@@ -1953,7 +2005,7 @@
       return;
     }
     ins.nota = null;
-    renderLista();
+    renderLista(); salvarState();
     setTimeout(() => { const inp = document.getElementById('nota-' + idx); if(inp) inp.focus(); }, 50);
   }
 
@@ -1962,7 +2014,7 @@
     if (!confirm('Resetar nota e contador de edições de "' + state.inscritos[idx].nome + '"?')) return;
     state.inscritos[idx].nota = null;
     state.inscritos[idx].notaEdicoes = 0;
-    renderLista();
+    renderLista(); salvarState();
     renderAdminPanel();
     showToast('🔄 Nota e contador resetados para ' + state.inscritos[idx].nome + '.');
   }
