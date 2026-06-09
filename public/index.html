@@ -934,11 +934,6 @@
         <button class="chip" data-nivel="medio" onclick="setChip(this,'medio')">Médio</button>
         <button class="chip" data-nivel="fundamental" onclick="setChip(this,'fundamental')">Fundamental</button>
       </div>
-      <div style="margin-top:10px;">
-        <select id="filtroCargoSelect" onchange="setFiltroCargo(this.value)" style="width:100%;background:#fff;border:1.5px solid var(--cinza-2);border-radius:var(--radius-xs);padding:8px 12px;font-size:13px;color:var(--texto);font-family:var(--sf);cursor:pointer;outline:none;">
-          <option value="">📋 Filtrar por cargo (todos)</option>
-        </select>
-      </div>
     </div>
 
     <div id="nota-banner" class="nota-banner bloqueada"><span class="nota-banner-icon">🔒</span><div class="nota-banner-text"><strong>Lançamento de notas bloqueado</strong><small>O administrador ainda não liberou o registro de notas.</small></div></div>
@@ -1249,7 +1244,7 @@
     fecharModalCargo();
     renderSelectCargos();
     renderAdminCargos();
-    renderLista(); renderTabela(); renderStats(); atualizarSelectCargo();
+    renderLista(); renderTabela(); renderStats();
   }
 
   function excluirCargo(idx) {
@@ -1263,7 +1258,7 @@
     state.cargos.splice(idx, 1);
     renderSelectCargos();
     renderAdminCargos();
-    renderLista(); renderTabela(); renderStats(); atualizarSelectCargo();
+    renderLista(); renderTabela(); renderStats();
     showToast('🗑️ Cargo removido.');
   }
 
@@ -1273,7 +1268,6 @@
 
   // inicializar selects
   renderSelectCargos();
-  atualizarSelectCargo();
 
   // ── HABILITAR BOTÃO DE INSCRIÇÃO ──
   function atualizarBtnInscrever() {
@@ -1301,7 +1295,7 @@
   }
 
   // ── INSCREVER ──
-  async function inscrever() {
+  function inscrever() {
     const nomeEl  = document.getElementById('nome');
     const emailEl = document.getElementById('email');
     const cargoEl = document.getElementById('cargo');
@@ -1323,38 +1317,24 @@
     const cargo = parts[0];
     const nivel = parts[3];
 
-    // Desabilita botão durante o salvamento
-    const btnInscrever = document.querySelector('button[onclick="inscrever()"]');
-    if (btnInscrever) { btnInscrever.disabled = true; btnInscrever.textContent = '⏳ Salvando...'; }
-
+    // Reset form
+    nomeEl.value = '';
+    cargoEl.value = '';
+    document.getElementById('cargo-info').style.display = 'none';
+    atualizarBtnInscrever();
+    showToast('✅ Inscrição de ' + nome + ' registrada!');
     if (window.salvarInscricaoFirestore) {
-      const ok = await window.salvarInscricaoFirestore({ nome, cargo, nivel });
-      if (ok) {
-        // Reset form apenas após confirmação
-        nomeEl.value = '';
-        cargoEl.value = '';
-        document.getElementById('cargo-info').style.display = 'none';
-        atualizarBtnInscrever();
-        showToast('✅ Inscrição de ' + nome + ' registrada!');
-      }
+      window.salvarInscricaoFirestore({ nome, cargo, nivel });
     } else {
       state.inscritos.unshift({ nome, cargo, nivel, ts: new Date(), nota: null, notaEdicoes: 0 });
       state.contadores[cargo] = (state.contadores[cargo] || 0) + 1;
-      nomeEl.value = '';
-      cargoEl.value = '';
-      document.getElementById('cargo-info').style.display = 'none';
-      atualizarBtnInscrever();
-      showToast('✅ Inscrição de ' + nome + ' registrada!');
-      renderLista(); renderTabela(); renderStats(); atualizarSelectCargo();
+      renderLista(); renderTabela(); renderStats();
     }
-
-    if (btnInscrever) { btnInscrever.disabled = false; btnInscrever.textContent = '✅ Confirmar Inscrição'; }
   }
 
   // ── ESTADO FILTRO ──
   let filtroTexto = '';
   let filtroNivel = '';
-  let filtroCargo = '';
 
   function aplicarFiltro() {
     const input = document.getElementById('filtroInput');
@@ -1375,46 +1355,9 @@
 
   function setChip(el, nivel) {
     filtroNivel = nivel;
-    filtroCargo = '';
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('chip-ativo'));
     el.classList.add('chip-ativo');
-    atualizarSelectCargo();
     renderLista();
-  }
-
-  function setFiltroCargo(cargo) {
-    filtroCargo = cargo;
-    renderLista();
-  }
-
-  function atualizarSelectCargo() {
-    const sel = document.getElementById('filtroCargoSelect');
-    if (!sel) return;
-    const valorAtual = sel.value;
-    sel.innerHTML = '<option value="">— Selecionar cargo (todos) —</option>';
-    const grupos = {};
-    state.cargos.forEach(c => {
-      if (!grupos[c.grupo]) grupos[c.grupo] = [];
-      grupos[c.grupo].push(c);
-    });
-    const nivelAtivo = filtroNivel;
-    Object.keys(grupos).forEach(grupo => {
-      const cargosDoGrupo = grupos[grupo].filter(c => !nivelAtivo || c.nivel === nivelAtivo);
-      if (cargosDoGrupo.length === 0) return;
-      const optGrupo = document.createElement('optgroup');
-      const nivelLabel = cargosDoGrupo[0].nivel === 'superior' ? 'Nível Superior' : cargosDoGrupo[0].nivel === 'medio' ? 'Nível Médio/Técnico' : 'Nível Fundamental';
-      optGrupo.label = nivelLabel + ' – ' + grupo;
-      cargosDoGrupo.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c.nome;
-        opt.textContent = (c.emoji ? c.emoji + ' ' : '') + c.nome;
-        optGrupo.appendChild(opt);
-      });
-      sel.appendChild(optGrupo);
-    });
-    const nomesDisponiveis = state.cargos.filter(c => !nivelAtivo || c.nivel === nivelAtivo).map(c => c.nome);
-    if (nomesDisponiveis.includes(valorAtual)) sel.value = valorAtual;
-    else { sel.value = ''; filtroCargo = ''; }
   }
 
   function getFiltrados() {
@@ -1423,8 +1366,7 @@
         i.nome.toLowerCase().includes(filtroTexto) ||
         i.cargo.toLowerCase().includes(filtroTexto);
       const matchNivel = !filtroNivel || i.nivel === filtroNivel;
-      const matchCargo = !filtroCargo || i.cargo === filtroCargo;
-      return matchTexto && matchNivel && matchCargo;
+      return matchTexto && matchNivel;
     });
   }
 
@@ -1455,34 +1397,7 @@
       return;
     }
 
-    // Calcula colocação POR CARGO usando _id como chave (compatível com Firebase)
-    const rankingPorCargo = {};
-    const gruposRanking = {};
-    state.inscritos.forEach((ins, idx) => {
-      const chave = ins._id || String(idx);
-      if (!gruposRanking[ins.cargo]) gruposRanking[ins.cargo] = [];
-      gruposRanking[ins.cargo].push({ ...ins, _chave: chave });
-    });
-    Object.keys(gruposRanking).forEach(cargo => {
-      const comNota = gruposRanking[cargo]
-        .filter(x => x.nota !== undefined && x.nota !== null && x.nota !== '')
-        .sort((a, b) => parseFloat(b.nota) - parseFloat(a.nota));
-      comNota.forEach((x, pos) => { rankingPorCargo[x._chave] = pos + 1; });
-    });
-
-    // Ordena SEMPRE por cargo (agrupado) e dentro de cada cargo do maior para menor nota
-    let ordenados = [...filtrados];
-    ordenados.sort((a, b) => {
-      if (!filtroCargo && a.cargo !== b.cargo) return a.cargo.localeCompare(b.cargo);
-      const notaA = a.nota !== undefined && a.nota !== null && a.nota !== '' ? parseFloat(a.nota) : -1;
-      const notaB = b.nota !== undefined && b.nota !== null && b.nota !== '' ? parseFloat(b.nota) : -1;
-      if (notaA !== notaB) return notaB - notaA;
-      return new Date(a.ts) - new Date(b.ts);
-    });
-
-    // Gera HTML com cabeçalhos separadores por cargo quando sem filtro
-    let cargoAtual = null;
-    el.innerHTML = ordenados.map(i => {
+    el.innerHTML = filtrados.map(i => {
       const idx = i.idx;
       const ini = i.nome.split(' ').map(p => p[0]).slice(0,2).join('').toUpperCase();
       const hora = i.ts.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
@@ -1490,23 +1405,9 @@
       const MAX_EDICOES = 3;
       const limiteAtingido = edicoes >= MAX_EDICOES;
       const temNota = i.nota !== undefined && i.nota !== null && i.nota !== '';
-      const _chaveRanking = i._id || String(idx);
-      const colocacao = rankingPorCargo[_chaveRanking];
       let notaHtml;
 
-      // Calcula medalha e colocação (usado em vários blocos abaixo)
-      const medalha = colocacao === 1 ? '🥇' : colocacao === 2 ? '🥈' : colocacao === 3 ? '🥉' : colocacao ? '🏅' : '';
-      const colocacaoHtml = colocacao
-        ? `<span style="font-size:11px;font-weight:700;color:${colocacao<=3?'#b8860b':'#444'};background:${colocacao<=3?'#fff8e1':'#f0f0f0'};border-radius:6px;padding:2px 8px;border:1px solid ${colocacao<=3?'#f0d060':'#ddd'};">${medalha} ${colocacao}º lugar no cargo</span>`
-        : '';
-
-      if (!state.notasLiberadas && temNota) {
-        // Notas bloqueadas mas candidato já tem nota (lançada pelo admin) — mostra colocação
-        notaHtml = `<div class="nota-wrap" style="flex-wrap:wrap;gap:6px;">
-          <span class="nota-bloqueada-msg">🔒 Nota bloqueada pelo administrador</span>
-          ${colocacaoHtml}
-        </div>`;
-      } else if (!state.notasLiberadas) {
+      if (!state.notasLiberadas) {
         notaHtml = `<div class="nota-wrap">
           <span class="nota-bloqueada-msg">🔒 Nota bloqueada pelo administrador</span>
         </div>`;
@@ -1517,10 +1418,9 @@
         const contadorHtml = podeEditar
           ? `<span class="edicoes-counter ${contadorClass}" title="Alterações restantes">✏️ ${restantes}x restante${restantes > 1 ? 's' : ''}</span>`
           : `<span class="edicoes-counter edicoes-esgotadas" title="Limite atingido — somente o administrador pode alterar">🔐 Bloqueado</span>`;
-        notaHtml = `<div class="nota-wrap" style="flex-wrap:wrap;gap:6px;">
+        notaHtml = `<div class="nota-wrap">
           <span style="font-size:11px;color:#6b7f96;font-weight:600;">📊 NOTA:</span>
           <span class="nota-badge">🎯 ${i.nota}</span>
-          ${colocacaoHtml}
           ${podeEditar
             ? `<button class="nota-salvar-btn" style="font-size:11px;padding:4px 10px;background:#2a5298;" onclick="editarNota(${idx})">✏️ Alterar</button>`
             : `<button class="nota-salvar-btn" disabled title="Limite de alterações atingido">🔐 Limite atingido</button>`
@@ -1528,6 +1428,7 @@
           ${contadorHtml}
         </div>`;
       } else if (limiteAtingido) {
+        // Sem nota, mas esgotou edições (caso raro — admin zerou)
         notaHtml = `<div class="nota-wrap">
           <span class="nota-bloqueada-msg">🔐 Sem nota — somente administrador pode inserir</span>
         </div>`;
@@ -1539,32 +1440,7 @@
           <span class="edicoes-counter ${restantes === 1 ? 'edicoes-alerta' : 'edicoes-ok'}" title="Você poderá alterar até ${MAX_EDICOES} vezes">✏️ ${restantes}x restante${restantes > 1 ? 's' : ''}</span>
         </div>`;
       }
-      // Cabeçalho separador por cargo (só quando sem filtro de cargo específico)
-      let cabecalhoCargo = '';
-      if (!filtroCargo && i.cargo !== cargoAtual) {
-        cargoAtual = i.cargo;
-        const totalCargo = state.inscritos.filter(x => x.cargo === i.cargo).length;
-        const comNotaCargo = state.inscritos.filter(x => x.cargo === i.cargo && x.nota !== null && x.nota !== undefined && x.nota !== '').length;
-        const cargoObj = state.cargos.find(c => c.nome === i.cargo);
-        const nomeGrupo = cargoObj ? cargoObj.grupo : '';
-        cabecalhoCargo = `<div style="
-          display:flex;align-items:center;justify-content:space-between;
-          padding:10px 14px 8px;
-          background:linear-gradient(90deg,rgba(0,122,255,0.07) 0%,transparent 100%);
-          border-left:3px solid var(--azul-vivo);
-          border-radius:6px 0 0 6px;
-          margin-bottom:4px;
-          margin-top:8px;
-        ">
-          <div>
-            <span style="font-weight:700;font-size:13px;color:var(--texto);">${esc(i.cargo)}</span>
-            ${nomeGrupo ? `<span style="font-size:11px;color:var(--cinza-3);margin-left:6px;">${esc(nomeGrupo)}</span>` : ''}
-          </div>
-          <span style="font-size:11px;color:var(--cinza-3);">${totalCargo} inscrito${totalCargo !== 1 ? 's' : ''}${comNotaCargo > 0 ? ' · ' + comNotaCargo + ' com nota' : ''}</span>
-        </div>`;
-      }
-
-      return cabecalhoCargo + `
+      return `
         <div class="inscrito-item" style="flex-wrap:wrap;min-width:0;">
           <div class="inscrito-avatar">${ini}</div>
           <div style="flex:1;min-width:120px;">
@@ -1672,7 +1548,7 @@
     state.inscritos = [];
     state.contadores = {};
     limparFiltro();
-    renderLista(); renderTabela(); renderStats(); atualizarSelectCargo();
+    renderLista(); renderTabela(); renderStats();
     showToast('🗑️ Todas as inscrições foram removidas.');
   }
 
@@ -1846,7 +1722,7 @@
       state.inscritos.splice(idx, 1);
       state.contadores[cargo]--;
       if (state.contadores[cargo] <= 0) delete state.contadores[cargo];
-      renderLista(); renderTabela(); renderStats(); atualizarSelectCargo();
+      renderLista(); renderTabela(); renderStats();
       renderAdminPanel();
     }
     showToast('🗑️ Candidato removido.');
@@ -1915,7 +1791,7 @@
     }
 
     fecharModalEdit();
-    renderLista(); renderTabela(); renderStats(); atualizarSelectCargo();
+    renderLista(); renderTabela(); renderStats();
     renderAdminPanel();
   }
 
@@ -1931,7 +1807,7 @@
     } else {
       state.inscritos = [];
       state.contadores = {};
-      renderLista(); renderTabela(); renderStats(); atualizarSelectCargo();
+      renderLista(); renderTabela(); renderStats();
       renderAdminPanel();
     }
     showToast('🗑️ Todas as inscrições foram removidas.');
@@ -2060,7 +1936,6 @@
     state.inscritos.forEach(i => {
       state.contadores[i.cargo] = (state.contadores[i.cargo] || 0) + 1;
     });
-    atualizarSelectCargo();
     renderLista();
     renderTabela();
     renderStats();
@@ -2081,15 +1956,9 @@
         nota: null,
         notaEdicoes: 0
       });
-      return true;
     } catch(e) {
       console.error('Erro ao salvar:', e);
-      if (e.code === 'permission-denied') {
-        showToast('🔒 Sem permissão — verifique as regras do Firestore.');
-      } else {
-        showToast('⚠️ Erro ao salvar inscrição. Tente novamente.');
-      }
-      return false;
+      showToast('⚠️ Erro ao salvar inscrição.');
     }
   };
 
