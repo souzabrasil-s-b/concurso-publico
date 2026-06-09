@@ -1364,7 +1364,7 @@
     // Usa _id (Firestore ID) como chave — índice numérico muda a cada onSnapshot
     const comId = state.inscritos.map(i => ({ ...i }));
 
-    // Calcula ranking por cargo (somente quem tem nota, ordenado nota desc)
+    // Calcula ranking por cargo: com nota (desc) primeiro, depois sem nota (por ordem de inscrição)
     const rankingPorCargo = {};
     const porCargo = {};
     comId.forEach(i => {
@@ -1375,7 +1375,10 @@
       const comNota = lista
         .filter(i => i.nota !== undefined && i.nota !== null && i.nota !== '')
         .sort((a, b) => parseFloat(b.nota) - parseFloat(a.nota));
-      comNota.forEach((i, pos) => {
+      const semNota = lista
+        .filter(i => i.nota === undefined || i.nota === null || i.nota === '')
+        .sort((a, b) => (a.ts && b.ts ? a.ts - b.ts : 0));
+      [...comNota, ...semNota].forEach((i, pos) => {
         rankingPorCargo[i._id] = pos + 1;
       });
     });
@@ -1473,15 +1476,16 @@
           <span class="edicoes-counter ${restantes === 1 ? 'edicoes-alerta' : 'edicoes-ok'}" title="Você poderá alterar até ${MAX_EDICOES} vezes">✏️ ${restantes}x restante${restantes > 1 ? 's' : ''}</span>
         </div>`;
       }
-      // Badge de colocação por cargo
+      // Badge de colocação por cargo (sempre visível)
       let colocacaoHtml = '';
-      if (state.notasLiberadas && i.colocacao) {
+      if (i.colocacao) {
+        const temNotaVal = i.nota !== undefined && i.nota !== null && i.nota !== '';
         const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
-        const medal = medals[i.colocacao] || '';
+        const medal = (temNotaVal && medals[i.colocacao]) ? medals[i.colocacao] : '';
         const colorMap = { 1: '#f5c518', 2: '#9eaebb', 3: '#cd7f32' };
-        const color = colorMap[i.colocacao] || '#6b7f96';
+        const color = temNotaVal ? (colorMap[i.colocacao] || '#6b7f96') : 'rgba(255,255,255,0.45)';
         const bgMap = { 1: 'rgba(245,197,24,0.13)', 2: 'rgba(158,174,187,0.13)', 3: 'rgba(205,127,50,0.13)' };
-        const bg = bgMap[i.colocacao] || 'rgba(107,127,150,0.10)';
+        const bg = temNotaVal ? (bgMap[i.colocacao] || 'rgba(107,127,150,0.10)') : 'rgba(107,127,150,0.12)';
         colocacaoHtml = `<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:${color};background:${bg};border-radius:6px;padding:1px 7px;margin-left:6px;vertical-align:middle;">${medal} ${i.colocacao}º</span>`;
       }
 
