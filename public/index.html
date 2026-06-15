@@ -1154,12 +1154,11 @@
   }
 
   // ── MARCA D'ÁGUA ──
-  let marcaDaguaAtiva = (localStorage.getItem('marcaDaguaAtiva') !== 'false');
+  let marcaDaguaAtiva = true;
   function toggleMarcaDagua() {
-    marcaDaguaAtiva = !marcaDaguaAtiva;
-    localStorage.setItem('marcaDaguaAtiva', marcaDaguaAtiva);
-    aplicarMarcaDagua();
-    showToast(marcaDaguaAtiva ? "✅ Marca d'água ativada." : "🚫 Marca d'água desativada.");
+    const novoValor = !marcaDaguaAtiva;
+    window.firebaseSet(window.firebaseRef(window.rtdb, 'config/marcaDaguaAtiva'), novoValor);
+    showToast(novoValor ? "✅ Marca d'água ativada." : "🚫 Marca d'água desativada.");
   }
   function aplicarMarcaDagua() {
     const footer = document.getElementById('alfaFooter');
@@ -1731,7 +1730,6 @@
 
   function abrirAdmin() {
     renderAdminPanel();
-    aplicarMarcaDagua();
     const panel = document.getElementById('adminPanel');
     panel.classList.add('open');
     panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2210,6 +2208,13 @@
     aplicarBannerVenda();
   });
 
+  // ── CONFIG GLOBAL: marcaDaguaAtiva (sync para todos os usuários) ──
+  onValue(ref(rtdb, 'config/marcaDaguaAtiva'), (snap) => {
+    const val = snap.val();
+    marcaDaguaAtiva = val === null ? true : val === true;
+    aplicarMarcaDagua();
+  });
+
   // Escuta log de acessos
   onValue(ref(rtdb, 'acessos'), (snap) => {
     const data = snap.val() || {};
@@ -2225,7 +2230,6 @@
 <script>
   // Aplica estado salvo da marca d'água ao carregar
   document.addEventListener('DOMContentLoaded', () => {
-    if (typeof aplicarMarcaDagua  === 'function') aplicarMarcaDagua();
     if (typeof aplicarBannerVenda === 'function') aplicarBannerVenda();
   });
 
