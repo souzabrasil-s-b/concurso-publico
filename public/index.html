@@ -765,7 +765,7 @@
         <span style="display:block;font-size:13px;font-weight:700;color:#fff;">🔖 Marca d'água do rodapé</span>
         <span style="display:block;font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px;" id="marcaDaguaDesc">Carregando…</span>
       </div>
-      <button id="marcaDaguaBtn" onclick="toggleMarcaDagua()" class="toggle-btn locked">🚫 Oculta</button>
+      <button id="marcaDaguaBtn" onclick="toggleMarcaDagua()" class="toggle-btn unlocked">✅ Visível</button>
     </div>
     <div class="admin-toggle-nota" style="margin-top:8px;">
       <div>
@@ -1731,6 +1731,7 @@
 
   function abrirAdmin() {
     renderAdminPanel();
+    aplicarMarcaDagua();
     const panel = document.getElementById('adminPanel');
     panel.classList.add('open');
     panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
