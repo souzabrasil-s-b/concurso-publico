@@ -1176,12 +1176,11 @@
   }
 
   // ── BANNER DE VENDA ──
-  let bannerVendaAtivo = (localStorage.getItem('bannerVendaAtivo') === 'true');
+  let bannerVendaAtivo = false;
   function toggleBannerVenda() {
-    bannerVendaAtivo = !bannerVendaAtivo;
-    localStorage.setItem('bannerVendaAtivo', bannerVendaAtivo);
-    aplicarBannerVenda();
-    showToast(bannerVendaAtivo ? '✅ Banner de venda visível.' : '🚫 Banner de venda ocultado.');
+    const novoValor = !bannerVendaAtivo;
+    window.firebaseSet(window.firebaseRef(window.rtdb, 'config/bannerVendaAtivo'), novoValor);
+    showToast(novoValor ? '✅ Banner de venda visível.' : '🚫 Banner de venda ocultado.');
   }
   function aplicarBannerVenda() {
     const el   = document.getElementById('bannerVenda');
@@ -2202,6 +2201,12 @@
       }
     }
     renderLista();
+  });
+
+  // ── CONFIG GLOBAL: bannerVendaAtivo (sync para todos os usuários) ──
+  onValue(ref(rtdb, 'config/bannerVendaAtivo'), (snap) => {
+    bannerVendaAtivo = snap.val() === true;
+    aplicarBannerVenda();
   });
 
   // Escuta log de acessos
